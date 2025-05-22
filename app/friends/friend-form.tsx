@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -35,6 +35,7 @@ interface FriendFormProps {
 export function FriendForm({ friend, onSuccess }: FriendFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [showPasswordField, setShowPasswordField] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,19 +48,36 @@ export function FriendForm({ friend, onSuccess }: FriendFormProps) {
     },
   })
 
-  // Watch the role field to conditionally show password field
-  const showPasswordField = !friend && !!form.watch("email");
+  // Watch email and role fields to conditionally show password field
+  const email = form.watch("email")
+  const role = form.watch("role")
+
+  // Update password field visibility when role or email changes
+  useEffect(() => {
+    setShowPasswordField(!friend && !!email && role === "admin")
+
+    // Clear password field if changing from admin to viewer
+    if (role !== "admin") {
+      form.setValue("password", "")
+    }
+  }, [email, role, friend, form])
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true)
 
     try {
+      // Ensure password is cleared for viewer roles
+      const submitValues = { ...values }
+      if (submitValues.role !== "admin") {
+        submitValues.password = ""
+      }
+
       if (friend) {
         // Update existing friend
         const response = await fetch(`/api/friends/${friend.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(submitValues),
         })
 
         if (!response.ok) throw new Error("Failed to update friend")
@@ -73,7 +91,7 @@ export function FriendForm({ friend, onSuccess }: FriendFormProps) {
         const response = await fetch("/api/friends", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(submitValues),
         })
 
         if (!response.ok) {

@@ -45,6 +45,24 @@ export async function PUT(
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    // Check if role is admin and password is required for new admin
+    if (role === "admin") {
+      const existingFriend = await sql`
+        SELECT * FROM friends WHERE id = ${id}
+      `;
+
+      // If changing from viewer to admin, or if admin but no existing password
+      if (
+        (existingFriend[0]?.role !== "admin" || !existingFriend[0]?.password) &&
+        (!password || password.trim() === "")
+      ) {
+        return NextResponse.json(
+          { error: "Password is required for admin role" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Make sure required columns exist
     await sql`
       ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT;
@@ -75,8 +93,15 @@ export async function PUT(
       }
     }
 
-    // If password is provided, update it; otherwise, keep the existing password
-    const passwordToUse = password ? password : existingFriend[0].password;
+    // Determine the password to use based on role
+    let passwordToUse;
+    if (role === "admin") {
+      // If admin, use provided password or keep existing one
+      passwordToUse = password ? password : existingFriend[0].password;
+    } else {
+      // If viewer, set password to null
+      passwordToUse = null;
+    }
 
     const updatedFriend = await sql`
       UPDATE friends

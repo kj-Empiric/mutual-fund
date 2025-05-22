@@ -25,6 +25,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
+    // Check if role is admin and password is required
+    if (role === "admin" && (!password || password.trim() === "")) {
+      return NextResponse.json(
+        { error: "Password is required for admin role" },
+        { status: 400 }
+      );
+    }
+
     // Check if the friends table exists first
     try {
       const tableCheck = await sql`
@@ -75,11 +83,14 @@ export async function POST(request: Request) {
       }
     }
 
+    // Only set password if role is admin, otherwise set to null
+    const passwordToSave = role === "admin" ? password : null;
+
     const result = await sql`
       INSERT INTO friends (name, email, phone, role, password)
       VALUES (${name}, ${email || null}, ${phone || null}, ${
       role || "viewer"
-    }, ${password || null})
+    }, ${passwordToSave})
       RETURNING *
     `;
 
