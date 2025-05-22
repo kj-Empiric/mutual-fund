@@ -6,12 +6,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, IndianRupee, Users, BarChart3, PiggyBank } from "lucide-react"
+import { ensureDatabaseSetup } from "@/lib/db"
+import { runDatabaseMigrations } from "@/lib/db-migration"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
 
 export default async function Dashboard() {
   try {
+    // Make sure the database is set up
+    await ensureDatabaseSetup()
+
+    // Run migrations to ensure all tables are properly structured
+    await runDatabaseMigrations()
+
     // Get fund totals
     const fundTotals = await sql`
       SELECT f.id, f.name
@@ -246,8 +254,8 @@ export default async function Dashboard() {
                           </div>
                           <div
                             className={`font-medium ${transaction.transaction_type === "deposit"
-                                ? "text-green-500"
-                                : "text-red-500"
+                              ? "text-green-500"
+                              : "text-red-500"
                               }`}
                           >
                             {transaction.transaction_type === "deposit" ? "+" : "-"}

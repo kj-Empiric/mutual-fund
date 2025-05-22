@@ -1,17 +1,6 @@
 import { sql } from "@/lib/db"
 import { PageHeader } from "@/components/page-header"
-import { FundForm } from "./fund-form"
-import { FundsTable } from "./funds-table"
-import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { FundsList } from "./funds-list"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
@@ -20,41 +9,31 @@ export default async function FundsPage() {
   try {
     // First, ensure the purchase_date column exists
     await sql`
-      ALTER TABLE funds ADD COLUMN IF NOT EXISTS purchase_date DATE;
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT 1 
+          FROM information_schema.columns 
+          WHERE table_name = 'funds' AND column_name = 'purchase_date'
+        ) THEN 
+          ALTER TABLE funds ADD COLUMN purchase_date DATE;
+        END IF;
+      END $$;
     `
 
+    // Then fetch the funds data
     const funds = await sql`
-      SELECT * FROM funds
-      ORDER BY name ASC
+      SELECT * FROM funds ORDER BY name ASC
     `
 
-    return (
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          <PageHeader heading="Mutual Funds" text="Manage your mutual funds with monthly tracking." />
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Mutual Fund
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Mutual Fund</DialogTitle>
-                <DialogDescription>Add a new mutual fund to track monthly investments.</DialogDescription>
-              </DialogHeader>
-              <FundForm />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <FundsTable initialFunds={funds} />
-      </div>
-    )
+    return <FundsList initialFunds={funds} />
   } catch (error) {
     console.error("Database error:", error)
-    throw error
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-4">Error Loading Funds</h1>
+        <p>There was an error loading the mutual funds. Please try again later.</p>
+      </div>
+    )
   }
 }

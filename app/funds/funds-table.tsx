@@ -14,6 +14,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MonthYearPicker } from "@/components/month-year-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { format } from "date-fns"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface Fund {
   id: number
@@ -119,6 +130,9 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
         description: "There was an error deleting the fund. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setDeletingFundId(null)
+      setIsDeleteDialogOpen(false)
     }
   }
 
@@ -277,13 +291,20 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
         </DialogContent>
       </Dialog>
 
-      <DeleteConfirmation
-        open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        itemType="mutual fund"
-        additionalWarning="This will also delete all contributions to this fund."
-      />
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the fund "{funds.find(f => f.id === deletingFundId)?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

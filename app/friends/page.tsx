@@ -1,4 +1,6 @@
-import { sql } from "@/lib/db"
+"use client"
+
+import { useState, useRef, useEffect } from "react"
 import { PageHeader } from "@/components/page-header"
 import { FriendForm } from "./friend-form"
 import { FriendsTable } from "./friends-table"
@@ -11,45 +13,71 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
 
-export default async function FriendsPage() {
-  try {
-    const friends = await sql`
-      SELECT * FROM friends
-      ORDER BY name ASC
-    `
+export default function FriendsPage() {
+  const router = useRouter()
+  const [friends, setFriends] = useState<any[]>([])
+  const closeRef = useRef<HTMLButtonElement>(null)
 
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <PageHeader heading="Friends" text="Manage your friends who contribute to mutual funds." />
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add Friend
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Friend</DialogTitle>
-                <DialogDescription>Add a new friend who will contribute to mutual funds.</DialogDescription>
-              </DialogHeader>
-              <FriendForm />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <FriendsTable initialFriends={friends} />
-      </div>
-    )
-  } catch (error) {
-    console.error("Database error:", error)
-    throw error
+  // Function to fetch friends
+  const fetchFriends = async () => {
+    try {
+      const response = await fetch('/api/friends')
+      if (response.ok) {
+        const data = await response.json()
+        setFriends(data)
+      }
+    } catch (error) {
+      console.error("Error fetching friends:", error)
+    }
   }
+
+  // Fetch friends on component mount
+  useEffect(() => {
+    fetchFriends()
+  }, [])
+
+  const handleSuccess = () => {
+    // Close the dialog
+    if (closeRef.current) {
+      closeRef.current.click()
+    }
+
+    // Refresh the friends list
+    fetchFriends()
+    router.refresh()
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <PageHeader heading="Friends" text="Manage your friends who contribute to mutual funds." />
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Friend
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Friend</DialogTitle>
+              <DialogDescription>Add a new friend who will contribute to mutual funds.</DialogDescription>
+            </DialogHeader>
+            <FriendForm onSuccess={handleSuccess} />
+            <DialogClose ref={closeRef} className="hidden" />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <FriendsTable initialFriends={friends} />
+    </div>
+  )
 }

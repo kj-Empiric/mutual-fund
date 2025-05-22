@@ -95,8 +95,26 @@ export async function GET() {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT,
+        phone TEXT,
+        role TEXT DEFAULT 'viewer',
+        password TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
+    `;
+
+    // Make sure phone column exists in the friends table
+    await sql`
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT;
+    `;
+
+    // Make sure role column exists in the friends table
+    await sql`
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'viewer';
+    `;
+
+    // Make sure password column exists in the friends table
+    await sql`
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS password TEXT;
     `;
 
     return NextResponse.json(

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/data-table"
@@ -16,6 +16,8 @@ import { MonthYearPicker } from "@/components/month-year-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 interface Transaction {
   id: number
@@ -42,6 +44,8 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
   const [deletingTransactionId, setDeletingTransactionId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   // Get unique bank names for filtering
   const bankNames = [...new Set(transactions.map(t => t.bank_name).filter(Boolean))]
@@ -232,8 +236,33 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
     return acc;
   }, {} as Record<string, Transaction[]>);
 
+  // Add this function to handle API errors
+  const handleApiError = (error: any, actionName: string) => {
+    console.error(`Error ${actionName}:`, error)
+    let errorMessage = `There was an error ${actionName.toLowerCase()}.`
+
+    if (error instanceof Error) {
+      errorMessage += ` ${error.message}`
+    }
+
+    setError(errorMessage)
+    toast({
+      title: "Error",
+      description: errorMessage,
+      variant: "destructive",
+    })
+  }
+
   return (
     <>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-end mb-4">
         <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
           <Filter className="mr-2 h-4 w-4" />

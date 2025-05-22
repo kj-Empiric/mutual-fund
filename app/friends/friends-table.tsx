@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/data-table"
@@ -18,19 +18,25 @@ interface Friend {
   email: string | null
   phone: string | null
   created_at: string
+  role: string
 }
 
 interface FriendsTableProps {
-  initialFriends: Friend[]
+  initialFriends: any[]
 }
 
 export function FriendsTable({ initialFriends }: FriendsTableProps) {
   const router = useRouter()
-  const [friends, setFriends] = useState<Friend[]>(initialFriends)
+  const [friends, setFriends] = useState<any[]>(initialFriends)
   const [editingFriend, setEditingFriend] = useState<Friend | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [deletingFriendId, setDeletingFriendId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // Update friends when initialFriends changes
+  useEffect(() => {
+    setFriends(initialFriends)
+  }, [initialFriends])
 
   const handleDeleteClick = (id: number) => {
     setDeletingFriendId(id)
@@ -82,6 +88,18 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
       header: "Phone",
       cell: ({ row }) => row.getValue("phone") || "-",
       enableSorting: true,
+    },
+    {
+      accessorKey: "role",
+      header: "Role",
+      cell: ({ row }) => {
+        const role = row.getValue("role") as string || "viewer";
+        return (
+          <span className={role === "admin" ? "text-blue-600 font-medium" : "text-gray-600"}>
+            {role === "admin" ? "Admin" : "Viewer"}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "created_at",
