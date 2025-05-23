@@ -90,40 +90,73 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
 
   const applyFilters = async () => {
     try {
-      let url = "/api/transactions?"
-      const params = new URLSearchParams()
+      setLoading(true);
+      setError(null);
 
-      if (selectedMonth && selectedMonth !== "all") params.append("month", selectedMonth)
-      if (selectedYear && selectedYear !== "all") params.append("year", selectedYear)
-      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory)
-      if (selectedBank && selectedBank !== "all") params.append("bank", selectedBank)
+      const params = new URLSearchParams();
 
-      url += params.toString()
+      if (selectedMonth && selectedMonth !== "all") params.append("month", selectedMonth);
+      if (selectedYear && selectedYear !== "all") params.append("year", selectedYear);
+      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory);
+      if (selectedBank && selectedBank !== "all") params.append("bank", selectedBank);
 
-      const response = await fetch(url)
-      if (!response.ok) throw new Error("Failed to fetch filtered transactions")
+      const url = `/api/transactions?${params.toString()}`;
 
-      const data = await response.json()
-      setTransactions(data.transactions)
-      setBalance(data.balance)
-      setIsFilterDialogOpen(false)
-    } catch (error) {
-      console.error("Error applying filters:", error)
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch filtered transactions");
+      }
+
+      const data = await response.json();
+      setTransactions(data.transactions || []);
+      setBalance(data.balance || 0);
+      setIsFilterDialogOpen(false);
+
       toast({
-        title: "Error",
-        description: "There was an error applying filters. Please try again.",
-        variant: "destructive",
-      })
+        title: "Filters applied",
+        description: "The transaction list has been updated."
+      });
+    } catch (error) {
+      console.error("Error applying filters:", error);
+      handleApiError(error, "applying filters");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const resetFilters = () => {
-    setSelectedMonth("all")
-    setSelectedYear(new Date().getFullYear().toString())
-    setSelectedCategory("all")
-    setSelectedBank("all")
-    router.refresh()
-  }
+  const resetFilters = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      setSelectedMonth("all");
+      setSelectedYear(new Date().getFullYear().toString());
+      setSelectedCategory("all");
+      setSelectedBank("all");
+
+      const response = await fetch("/api/transactions");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to reset filters");
+      }
+
+      const data = await response.json();
+      setTransactions(data.transactions || []);
+      setBalance(data.balance || 0);
+      setIsFilterDialogOpen(false);
+
+      toast({
+        title: "Filters reset",
+        description: "Showing all transactions."
+      });
+    } catch (error) {
+      console.error("Error resetting filters:", error);
+      handleApiError(error, "resetting filters");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: ColumnDef<Transaction>[] = [
     {
@@ -407,11 +440,20 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
               </div>
 
               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                <Button variant="outline" className="w-full" onClick={resetFilters}>
-                  Reset
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={resetFilters}
+                  disabled={loading}
+                >
+                  {loading ? "Resetting..." : "Reset"}
                 </Button>
-                <Button className="w-full" onClick={applyFilters}>
-                  Apply Filters
+                <Button
+                  className="w-full"
+                  onClick={applyFilters}
+                  disabled={loading}
+                >
+                  {loading ? "Applying..." : "Apply Filters"}
                 </Button>
               </div>
             </CardContent>

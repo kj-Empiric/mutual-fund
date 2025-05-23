@@ -3,72 +3,131 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
+    console.log("Transactions API called with URL:", request.url);
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const year = searchParams.get("year");
     const category = searchParams.get("category");
     const bank = searchParams.get("bank");
 
-    // Build the query dynamically
-    const queryParts = [
-      `SELECT t.*, 
-       t.friend_name AS friend_name
-       FROM transactions t
-       WHERE 1=1`,
-    ];
+    console.log("Filtering transactions with params:", {
+      month,
+      year,
+      category,
+      bank,
+    });
 
-    if (month && month !== "all" && year) {
-      queryParts.push(`AND EXTRACT(MONTH FROM t.transaction_date) = '${month}'
-                      AND EXTRACT(YEAR FROM t.transaction_date) = '${year}'`);
-    } else if (month && month !== "all") {
-      queryParts.push(
-        `AND EXTRACT(MONTH FROM t.transaction_date) = '${month}'`
-      );
-    } else if (year) {
-      queryParts.push(`AND EXTRACT(YEAR FROM t.transaction_date) = '${year}'`);
+    // Start with a base query
+    let query = sql`
+      SELECT * 
+      FROM transactions 
+      WHERE 1=1
+    `;
+
+    // Add filters using parameter binding
+    if (month && month !== "all") {
+      const monthInt = parseInt(month, 10);
+      console.log("Adding month filter:", monthInt);
+      query = sql`${query} AND EXTRACT(MONTH FROM transaction_date) = ${monthInt}`;
+    }
+
+    if (year && year !== "all") {
+      const yearInt = parseInt(year, 10);
+      console.log("Adding year filter:", yearInt);
+      query = sql`${query} AND EXTRACT(YEAR FROM transaction_date) = ${yearInt}`;
     }
 
     if (category && category !== "all") {
-      queryParts.push(`AND t.transaction_category = '${category}'`);
+      console.log("Adding category filter:", category);
+      query = sql`${query} AND transaction_category = ${category}`;
     }
 
     if (bank && bank !== "all") {
-      queryParts.push(`AND t.bank_name = '${bank}'`);
+      console.log("Adding bank filter:", bank);
+      query = sql`${query} AND bank_name = ${bank}`;
     }
 
-    queryParts.push(`ORDER BY t.transaction_date DESC`);
+    // Add the order by clause
+    query = sql`${query} ORDER BY transaction_date DESC`;
+    console.log("Final query built with filters");
 
-    const query = queryParts.join(" ");
-    const transactions = await sql([query] as any);
+    // Execute the query with better error handling
+    try {
+      const transactions = await query;
+      console.log(
+        `Successfully fetched ${transactions?.length || 0} transactions`
+      );
 
-    // Calculate current balance
-    const balanceResult = await sql`
-      SELECT SUM(
-        CASE 
-          WHEN transaction_type = 'deposit' THEN amount 
-          WHEN transaction_type IN ('withdrawal', 'charges', 'mutual_funds') THEN -amount
-          ELSE 0
-        END
-      ) as balance
-      FROM transactions
-    `;
+      // Calculate balance with a similar approach
+      let balanceQuery = sql`
+        SELECT SUM(
+          CASE 
+            WHEN transaction_type = 'deposit' THEN amount 
+            WHEN transaction_type = 'withdrawal' THEN -amount
+            ELSE 0
+          END
+        ) as balance
+        FROM transactions
+        WHERE 1=1
+      `;
 
-    const balance = balanceResult[0]?.balance || 0;
+      // Add the same filters to the balance query
+      if (month && month !== "all") {
+        const monthInt = parseInt(month, 10);
+        balanceQuery = sql`${balanceQuery} AND EXTRACT(MONTH FROM transaction_date) = ${monthInt}`;
+      }
 
-    // Get distinct bank names for filtering
-    const banks = await sql`
-      SELECT DISTINCT bank_name FROM transactions WHERE bank_name IS NOT NULL ORDER BY bank_name
-    `;
+      if (year && year !== "all") {
+        const yearInt = parseInt(year, 10);
+        balanceQuery = sql`${balanceQuery} AND EXTRACT(YEAR FROM transaction_date) = ${yearInt}`;
+      }
 
-    return NextResponse.json({
-      transactions,
-      balance,
-      banks,
-    });
+      if (category && category !== "all") {
+        balanceQuery = sql`${balanceQuery} AND transaction_category = ${category}`;
+      }
+
+      if (bank && bank !== "all") {
+        balanceQuery = sql`${balanceQuery} AND bank_name = ${bank}`;
+      }
+
+      const balanceResult = await balanceQuery;
+      const balance = balanceResult[0]?.balance || 0;
+      console.log("Calculated balance:", balance);
+
+      // Get distinct bank names for filtering
+      const banks = await sql`
+        SELECT DISTINCT bank_name FROM transactions WHERE bank_name IS NOT NULL ORDER BY bank_name
+      `;
+
+      return NextResponse.json({
+        transactions,
+        balance,
+        banks,
+      });
+    } catch (queryError) {
+      console.error("Error executing transaction queries:", queryError);
+      if (queryError instanceof Error) {
+        return NextResponse.json(
+          { error: `Database query error: ${queryError.message}` },
+          { status: 500 }
+        );
+      }
+      throw queryError;
+    }
   } catch (error) {
-    console.error("Error fetching transactions:", error);
+    console.error("Unhandled error in transactions API:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorStack =
+      error instanceof Error ? error.stack : "No stack trace available";
+
+    console.error("Error details:", {
+      message: errorMessage,
+      stack: errorStack,
+    });
+
     return NextResponse.json(
-      { error: "Failed to fetch transactions" },
+      { error: "Failed to fetch transactions", details: errorMessage },
       { status: 500 }
     );
   }
