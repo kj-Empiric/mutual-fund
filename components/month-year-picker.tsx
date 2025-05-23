@@ -15,13 +15,13 @@ export function MonthYearPicker({ month, year, onMonthChange, onYearChange }: Mo
   const yearOptions = getYearOptions()
 
   return (
-    <div className="flex space-x-2">
+    <div className="flex flex-col sm:flex-row gap-2">
       <Select value={month} onValueChange={onMonthChange}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Select month" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Months</SelectItem>
+          <SelectItem value="all">All Months</SelectItem>
           {monthOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
@@ -30,10 +30,11 @@ export function MonthYearPicker({ month, year, onMonthChange, onYearChange }: Mo
         </SelectContent>
       </Select>
       <Select value={year} onValueChange={onYearChange}>
-        <SelectTrigger className="w-[120px]">
+        <SelectTrigger className="w-full sm:w-[120px]">
           <SelectValue placeholder="Select year" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="all">All Years</SelectItem>
           {yearOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

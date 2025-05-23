@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
 import { ContributionForm } from "./contribution-form"
-import { MoreHorizontal, Pencil, Trash, Filter } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash, Filter, RefreshCw } from "lucide-react"
 import { formatCurrency } from "@/lib/db"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MonthYearPicker } from "@/components/month-year-picker"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 interface Contribution {
   id: number
@@ -44,13 +45,12 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
   const [deletingContributionId, setDeletingContributionId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [databaseError, setDatabaseError] = useState<{ title: string; description: string } | null>(null)
 
   // Filter states
-  const [selectedFriendId, setSelectedFriendId] = useState<string>(searchParams.get("friendId") || "")
-  const [selectedMonth, setSelectedMonth] = useState<string>(searchParams.get("month") || "")
-  const [selectedYear, setSelectedYear] = useState<string>(
-    searchParams.get("year") || new Date().getFullYear().toString(),
-  )
+  const [selectedFriendId, setSelectedFriendId] = useState<string>(searchParams.get("friendId") || "all")
+  const [selectedMonth, setSelectedMonth] = useState<string>(searchParams.get("month") || "all")
+  const [selectedYear, setSelectedYear] = useState<string>(searchParams.get("year") || "all")
 
   const handleDeleteClick = (id: number) => {
     setDeletingContributionId(id)
@@ -89,45 +89,82 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
       let url = "/api/contributions?"
       const params = new URLSearchParams()
 
-      if (selectedFriendId) params.append("friendId", selectedFriendId)
-      if (selectedMonth) params.append("month", selectedMonth)
-      if (selectedYear) params.append("year", selectedYear)
+      if (selectedFriendId && selectedFriendId !== "all") {
+        params.append("friendId", selectedFriendId)
+      }
+
+      if (selectedMonth && selectedMonth !== "all") {
+        params.append("month", selectedMonth)
+      }
+
+      if (selectedYear && selectedYear !== "all") {
+        params.append("year", selectedYear)
+      }
 
       url += params.toString()
 
       const response = await fetch(url)
-      if (!response.ok) throw new Error("Failed to fetch filtered contributions")
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        console.error("Filter API error:", errorData)
+        setIsFilterDialogOpen(false) // Close the dialog even on error
+        throw new Error(errorData.error || `Failed with status ${response.status}`)
+      }
 
       const data = await response.json()
       setContributions(data)
       setIsFilterDialogOpen(false)
+      setDatabaseError(null) // Clear any previous errors
 
       // Update URL with filters
       const newParams = new URLSearchParams(window.location.search)
-      if (selectedFriendId) newParams.set("friendId", selectedFriendId)
-      else newParams.delete("friendId")
+      if (selectedFriendId && selectedFriendId !== "all") {
+        newParams.set("friendId", selectedFriendId)
+      } else {
+        newParams.delete("friendId")
+      }
 
-      if (selectedMonth) newParams.set("month", selectedMonth)
-      else newParams.delete("month")
+      if (selectedMonth && selectedMonth !== "all") {
+        newParams.set("month", selectedMonth)
+      } else {
+        newParams.delete("month")
+      }
 
-      if (selectedYear) newParams.set("year", selectedYear)
-      else newParams.delete("year")
+      if (selectedYear && selectedYear !== "all") {
+        newParams.set("year", selectedYear)
+      } else {
+        newParams.delete("year")
+      }
 
       router.push(`/contributions?${newParams.toString()}`)
     } catch (error) {
       console.error("Error applying filters:", error)
-      toast({
-        title: "Error",
-        description: "There was an error applying filters. Please try again.",
-        variant: "destructive",
-      })
+
+      // Check for database connection error
+      if (error instanceof Error && error.message.includes("Database Connection Error")) {
+        setDatabaseError({
+          title: "Database Connection Error",
+          description: "Could not connect to the database. Please check that your database connection string is properly set in the environment variables."
+        })
+      } else {
+        toast({
+          title: "Error applying filters",
+          description: error instanceof Error
+            ? error.message
+            : "There was an error applying filters. Please try again.",
+          variant: "destructive",
+        })
+      }
+
+      // Always close the dialog on error
+      setIsFilterDialogOpen(false)
     }
   }
 
   const resetFilters = () => {
-    setSelectedFriendId("")
-    setSelectedMonth("")
-    setSelectedYear(new Date().getFullYear().toString())
+    setSelectedFriendId("all")
+    setSelectedMonth("all")
+    setSelectedYear("all")
     router.push("/contributions")
     router.refresh()
   }
@@ -208,15 +245,32 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
         </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={contributions}
-        searchColumn="friend_name"
-        searchPlaceholder="Search contributions..."
-      />
+      {databaseError ? (
+        <Alert className="mt-4">
+          <AlertTitle>{databaseError.title}</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <p>{databaseError.description}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit flex items-center gap-1"
+              onClick={applyFilters}
+            >
+              <RefreshCw className="h-4 w-4" /> Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={contributions}
+          searchColumn="friend_name"
+          searchPlaceholder="Search contributions..."
+        />
+      )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Contribution</DialogTitle>
             <DialogDescription>Update contribution information.</DialogDescription>
@@ -235,7 +289,7 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
       </Dialog>
 
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Filter Contributions</DialogTitle>
             <DialogDescription>Filter contributions by friend, month, or year.</DialogDescription>
@@ -248,11 +302,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
               <div className="space-y-2">
                 <label className="text-sm font-medium">Friend</label>
                 <Select value={selectedFriendId} onValueChange={setSelectedFriendId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Friends" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Friends</SelectItem>
+                    <SelectItem value="all">All Friends</SelectItem>
                     {friends.map((friend) => (
                       <SelectItem key={friend.id} value={String(friend.id)}>
                         {friend.name}
@@ -272,11 +326,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
                 />
               </div>
 
-              <div className="flex space-x-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={resetFilters}>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                <Button variant="outline" className="w-full" onClick={resetFilters}>
                   Reset
                 </Button>
-                <Button className="flex-1" onClick={applyFilters}>
+                <Button className="w-full" onClick={applyFilters}>
                   Apply Filters
                 </Button>
               </div>

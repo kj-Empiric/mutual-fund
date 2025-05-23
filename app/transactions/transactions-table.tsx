@@ -51,10 +51,10 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   const bankNames = [...new Set(transactions.map(t => t.bank_name).filter(Boolean))]
 
   // Filter states
-  const [selectedMonth, setSelectedMonth] = useState<string>("")
+  const [selectedMonth, setSelectedMonth] = useState<string>("all")
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString())
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [selectedBank, setSelectedBank] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedBank, setSelectedBank] = useState<string>("all")
 
   const handleDeleteClick = (id: number) => {
     setDeletingTransactionId(id)
@@ -93,10 +93,10 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
       let url = "/api/transactions?"
       const params = new URLSearchParams()
 
-      if (selectedMonth) params.append("month", selectedMonth)
-      if (selectedYear) params.append("year", selectedYear)
-      if (selectedCategory) params.append("category", selectedCategory)
-      if (selectedBank) params.append("bank", selectedBank)
+      if (selectedMonth && selectedMonth !== "all") params.append("month", selectedMonth)
+      if (selectedYear && selectedYear !== "all") params.append("year", selectedYear)
+      if (selectedCategory && selectedCategory !== "all") params.append("category", selectedCategory)
+      if (selectedBank && selectedBank !== "all") params.append("bank", selectedBank)
 
       url += params.toString()
 
@@ -118,10 +118,10 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   }
 
   const resetFilters = () => {
-    setSelectedMonth("")
+    setSelectedMonth("all")
     setSelectedYear(new Date().getFullYear().toString())
-    setSelectedCategory("")
-    setSelectedBank("")
+    setSelectedCategory("all")
+    setSelectedBank("all")
     router.refresh()
   }
 
@@ -293,9 +293,9 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center">
                       <Building className="mr-2 h-5 w-5 text-primary" />
-                      <CardTitle>{bank}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">{bank}</CardTitle>
                     </div>
-                    <CardDescription className="text-lg font-medium">
+                    <CardDescription className="text-base sm:text-lg font-medium">
                       Balance: {formatCurrency(bankBalance)}
                     </CardDescription>
                   </div>
@@ -322,7 +322,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
       )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[525px]">
+        <DialogContent className="sm:max-w-[525px] w-[95vw] max-w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Edit Transaction</DialogTitle>
             <DialogDescription>Update transaction information.</DialogDescription>
@@ -340,7 +340,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
       </Dialog>
 
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Filter Transactions</DialogTitle>
             <DialogDescription>Filter transactions by date, category, or bank.</DialogDescription>
@@ -350,7 +350,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
               <CardTitle>Filters</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center">
                     <Calendar className="mr-2 h-4 w-4" />
@@ -370,11 +370,11 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                     Bank
                   </label>
                   <Select value={selectedBank} onValueChange={setSelectedBank}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="All Banks" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Banks</SelectItem>
+                      <SelectItem value="all">All Banks</SelectItem>
                       {bankNames.map((bank) => (
                         <SelectItem key={bank} value={bank}>
                           {bank}
@@ -391,11 +391,11 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                   Category
                 </label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     <SelectItem value="mutual_fund">Mutual Fund</SelectItem>
                     <SelectItem value="bank_charges">Bank Charges</SelectItem>
                     <SelectItem value="salary">Salary</SelectItem>
@@ -406,11 +406,11 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                 </Select>
               </div>
 
-              <div className="flex space-x-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={resetFilters}>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                <Button variant="outline" className="w-full" onClick={resetFilters}>
                   Reset
                 </Button>
-                <Button className="flex-1" onClick={applyFilters}>
+                <Button className="w-full" onClick={applyFilters}>
                   Apply Filters
                 </Button>
               </div>

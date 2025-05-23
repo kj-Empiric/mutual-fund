@@ -41,7 +41,7 @@ export function DeleteConfirmation({
 
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogContent>
+            <AlertDialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure you want to delete this {itemType}?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -51,15 +51,15 @@ export function DeleteConfirmation({
                         )}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex-col sm:flex-row space-y-2 sm:space-y-0">
+                    <AlertDialogCancel disabled={isDeleting} className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                         onClick={(e) => {
                             e.preventDefault()
                             handleConfirm()
                         }}
                         disabled={isDeleting}
-                        className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                        className="w-full sm:w-auto bg-red-600 hover:bg-red-700 focus:ring-red-600"
                     >
                         {isDeleting ? "Deleting..." : "Delete"}
                     </AlertDialogAction>

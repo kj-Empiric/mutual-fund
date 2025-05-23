@@ -9,7 +9,7 @@ export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <div className="mr-4 flex">
+    <div className="mr-4 hidden md:flex">
       <Link href="/" className="mr-6 flex items-center space-x-2">
         <span className="font-bold">Mutual Funds Tracker</span>
       </Link>
@@ -33,6 +33,17 @@ export function MainNav() {
           )}
         >
           Funds
+        </Link>
+        <Link
+          href="/fund-contributions"
+          className={cn(
+            "transition-colors hover:text-foreground/80",
+            pathname?.startsWith("/fund-contributions")
+              ? "text-foreground"
+              : "text-foreground/60"
+          )}
+        >
+          Fund Contributions
         </Link>
         <Link
           href="/transactions"

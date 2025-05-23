@@ -46,9 +46,9 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
   const [editingFund, setEditingFund] = useState<Fund | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
-  const [selectedMonth, setSelectedMonth] = useState("")
+  const [selectedMonth, setSelectedMonth] = useState("all")
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString())
-  const [selectedFundType, setSelectedFundType] = useState("")
+  const [selectedFundType, setSelectedFundType] = useState("all")
   const [deletingFundId, setDeletingFundId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
@@ -95,9 +95,9 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
   }
 
   const resetFilters = () => {
-    setSelectedMonth("")
+    setSelectedMonth("all")
     setSelectedYear(new Date().getFullYear().toString())
-    setSelectedFundType("")
+    setSelectedFundType("all")
     setFunds(initialFunds)
   }
 
@@ -223,7 +223,7 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
       <DataTable columns={columns} data={funds} searchColumn="name" searchPlaceholder="Search mutual funds..." />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Mutual Fund</DialogTitle>
             <DialogDescription>Update mutual fund information.</DialogDescription>
@@ -241,7 +241,7 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
       </Dialog>
 
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Filter Mutual Funds</DialogTitle>
             <DialogDescription>Filter mutual funds by type, month, or year.</DialogDescription>
@@ -254,11 +254,11 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Fund Type</label>
                 <Select value={selectedFundType} onValueChange={setSelectedFundType}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Fund Types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Fund Types</SelectItem>
+                    <SelectItem value="all">All Fund Types</SelectItem>
                     <SelectItem value="index fund">Index Fund</SelectItem>
                     <SelectItem value="etf">ETF</SelectItem>
                     <SelectItem value="balanced">Balanced</SelectItem>
@@ -278,11 +278,11 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
                 />
               </div>
 
-              <div className="flex space-x-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={resetFilters}>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                <Button variant="outline" className="w-full" onClick={resetFilters}>
                   Reset
                 </Button>
-                <Button className="flex-1" onClick={applyFilters}>
+                <Button className="w-full" onClick={applyFilters}>
                   Apply Filters
                 </Button>
               </div>
@@ -292,16 +292,16 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete the fund "{funds.find(f => f.id === deletingFundId)?.name}". This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          <AlertDialogFooter className="flex-col sm:flex-row space-y-2 sm:space-y-0">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="w-full sm:w-auto">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

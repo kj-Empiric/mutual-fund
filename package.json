@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-fund-contributions": "node scripts/update-fund-contributions.js"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",

@@ -3,6 +3,28 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+    // Test database connection
+    console.log("Testing database connection...");
+    const connectionTest = await sql`SELECT 1 as connection_test`;
+    console.log("Database connection test result:", connectionTest);
+
+    if (
+      !connectionTest ||
+      !connectionTest[0] ||
+      connectionTest[0].connection_test !== 1
+    ) {
+      console.error("Database connection test failed");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Database connection test failed",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log("Database connection successful, proceeding with setup...");
+
     // Create funds table
     await sql`
       CREATE TABLE IF NOT EXISTS funds (
