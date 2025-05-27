@@ -61,30 +61,45 @@ export async function runDatabaseMigrations() {
       )
     `;
 
-    // 2. Ensure all required columns exist
+    // 2. Ensure all required columns exist - each in a separate SQL call
     // For friends table
     await sql`
-      ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT;
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT
     `;
 
     // For transactions table
     await sql`
-      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transaction_category TEXT;
-      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS bank_name TEXT;
-      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS friend_name TEXT;
+      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transaction_category TEXT
+    `;
+
+    await sql`
+      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS bank_name TEXT
+    `;
+
+    await sql`
+      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS friend_name TEXT
     `;
 
     // For funds table
     await sql`
-      ALTER TABLE funds ADD COLUMN IF NOT EXISTS fund_type TEXT;
-      ALTER TABLE funds ADD COLUMN IF NOT EXISTS description TEXT;
-      ALTER TABLE funds ADD COLUMN IF NOT EXISTS purchase_date DATE;
-      ALTER TABLE funds ADD COLUMN IF NOT EXISTS price NUMERIC(10, 2);
+      ALTER TABLE funds ADD COLUMN IF NOT EXISTS fund_type TEXT
+    `;
+
+    await sql`
+      ALTER TABLE funds ADD COLUMN IF NOT EXISTS description TEXT
+    `;
+
+    await sql`
+      ALTER TABLE funds ADD COLUMN IF NOT EXISTS purchase_date DATE
+    `;
+
+    await sql`
+      ALTER TABLE funds ADD COLUMN IF NOT EXISTS price NUMERIC(10, 2)
     `;
 
     // For contributions table
     await sql`
-      ALTER TABLE contributions ADD COLUMN IF NOT EXISTS contribution_date DATE;
+      ALTER TABLE contributions ADD COLUMN IF NOT EXISTS contribution_date DATE
     `;
 
     console.log("Database structure check complete");

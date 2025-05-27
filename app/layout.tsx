@@ -3,10 +3,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { MainNav } from "@/components/main-nav"
-import { MobileNav } from "@/components/mobile-nav"
-import { MobileBottomNav } from "@/components/mobile-bottom-nav"
-import Link from "next/link"
+import { SiteHeader } from "@/components/site-header"
+import { MobileSiteHeader } from "@/components/mobile-site-header"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,23 +27,19 @@ export default function RootLayout({
       <body className={`${inter.className} h-full`}>
         <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
           <div className="flex min-h-screen flex-col">
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container flex h-14 items-center px-4 sm:px-6 lg:px-8">
-                <MainNav />
-                <div className="md:hidden flex-1 flex items-center justify-center">
-                  <Link href="/" className="font-bold text-lg">
-                    Mutual Funds Tracker
-                  </Link>
-                </div>
-                <div className="flex items-center justify-end md:flex-1">
-                  <MobileNav />
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 pb-16 md:pb-0">
+            {/* Desktop header */}
+            <div className="hidden md:block">
+              <SiteHeader />
+            </div>
+
+            {/* Mobile header */}
+            <div className="md:hidden">
+              <MobileSiteHeader />
+            </div>
+
+            <main className="flex-1">
               <div className="container px-4 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</div>
             </main>
-            <MobileBottomNav />
           </div>
         </ThemeProvider>
       </body>

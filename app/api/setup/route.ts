@@ -52,13 +52,13 @@ export async function GET() {
       )
     `;
 
-    // Add columns to transactions table if they don't exist
+    // Add columns to transactions table if they don't exist - one at a time
     await sql`
-      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transaction_category TEXT;
+      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transaction_category TEXT
     `;
 
     await sql`
-      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS bank_name TEXT;
+      ALTER TABLE transactions ADD COLUMN IF NOT EXISTS bank_name TEXT
     `;
 
     // Create contributions table
@@ -75,12 +75,12 @@ export async function GET() {
 
     // Ensure the contributions table doesn't have a fund_id column
     await sql`
-      ALTER TABLE contributions DROP COLUMN IF EXISTS fund_id CASCADE;
+      ALTER TABLE contributions DROP COLUMN IF EXISTS fund_id CASCADE
     `;
 
     // Make sure the contribution_date column exists
     await sql`
-      ALTER TABLE contributions ADD COLUMN IF NOT EXISTS contribution_date DATE;
+      ALTER TABLE contributions ADD COLUMN IF NOT EXISTS contribution_date DATE
     `;
 
     // If the date column exists, migrate data to contribution_date and then drop date column
@@ -103,7 +103,7 @@ export async function GET() {
 
         // Drop the date column
         await sql`
-          ALTER TABLE contributions DROP COLUMN IF EXISTS date CASCADE;
+          ALTER TABLE contributions DROP COLUMN IF EXISTS date CASCADE
         `;
       }
     } catch (error) {
@@ -126,17 +126,17 @@ export async function GET() {
 
     // Make sure phone column exists in the friends table
     await sql`
-      ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT;
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS phone TEXT
     `;
 
     // Make sure role column exists in the friends table
     await sql`
-      ALTER TABLE friends ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'viewer';
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'viewer'
     `;
 
     // Make sure password column exists in the friends table
     await sql`
-      ALTER TABLE friends ADD COLUMN IF NOT EXISTS password TEXT;
+      ALTER TABLE friends ADD COLUMN IF NOT EXISTS password TEXT
     `;
 
     return NextResponse.json(

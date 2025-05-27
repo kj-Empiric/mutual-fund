@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import type { ColumnDef } from "@tanstack/react-table"
 import { DataTable } from "@/components/data-table"
@@ -52,6 +52,86 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   const [selectedMonth, setSelectedMonth] = useState<string>(searchParams.get("month") || "all")
   const [selectedYear, setSelectedYear] = useState<string>(searchParams.get("year") || "all")
 
+  // Apply filters when the component mounts or when URL parameters change
+  useEffect(() => {
+    const friendId = searchParams.get("friendId")
+    const month = searchParams.get("month")
+    const year = searchParams.get("year")
+
+    // Only fetch if there are filter parameters
+    if (friendId || month || year) {
+      setSelectedFriendId(friendId || "all")
+      setSelectedMonth(month || "all")
+      setSelectedYear(year || "all")
+
+      fetchFilteredContributions(friendId, month, year)
+    }
+  }, [searchParams])
+
+  const fetchFilteredContributions = async (friendId?: string | null, month?: string | null, year?: string | null) => {
+    try {
+      let url;
+
+      // If only friendId is provided, use the dedicated endpoint
+      if (friendId && friendId !== "all" && (!month || month === "all") && (!year || year === "all")) {
+        url = `/api/contributions/by-friend/${friendId}`;
+        console.log("Using dedicated friend endpoint:", url);
+      } else {
+        // Otherwise use the regular endpoint with query parameters
+        url = "/api/contributions?";
+        const params = new URLSearchParams();
+
+        if (friendId && friendId !== "all") {
+          params.append("friendId", friendId);
+        }
+
+        if (month && month !== "all") {
+          params.append("month", month);
+        }
+
+        if (year && year !== "all") {
+          params.append("year", year);
+        }
+
+        url += params.toString();
+        console.log("Using standard filtering endpoint:", url);
+      }
+
+      console.log("Fetching filtered contributions with URL:", url);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        console.error("Filter API error: response not OK", response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Filter API error data:", errorData);
+        throw new Error(errorData.error || `Failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Filtered data received:", data.length, "contributions");
+      setContributions(data);
+      setDatabaseError(null); // Clear any previous errors
+    } catch (error) {
+      console.error("Error fetching filtered contributions:", error);
+
+      // Check for database connection error
+      if (error instanceof Error && error.message.includes("Database Connection Error")) {
+        setDatabaseError({
+          title: "Database Connection Error",
+          description: "Could not connect to the database. Please check that your database connection string is properly set in the environment variables."
+        });
+      } else {
+        toast({
+          title: "Error applying filters",
+          description: error instanceof Error
+            ? error.message
+            : "There was an error applying filters. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }
+
   const handleDeleteClick = (id: number) => {
     setDeletingContributionId(id)
     setIsDeleteDialogOpen(true)
@@ -86,78 +166,36 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
 
   const applyFilters = async () => {
     try {
-      let url = "/api/contributions?"
-      const params = new URLSearchParams()
-
-      if (selectedFriendId && selectedFriendId !== "all") {
-        params.append("friendId", selectedFriendId)
-      }
-
-      if (selectedMonth && selectedMonth !== "all") {
-        params.append("month", selectedMonth)
-      }
-
-      if (selectedYear && selectedYear !== "all") {
-        params.append("year", selectedYear)
-      }
-
-      url += params.toString()
-
-      const response = await fetch(url)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error("Filter API error:", errorData)
-        setIsFilterDialogOpen(false) // Close the dialog even on error
-        throw new Error(errorData.error || `Failed with status ${response.status}`)
-      }
-
-      const data = await response.json()
-      setContributions(data)
-      setIsFilterDialogOpen(false)
-      setDatabaseError(null) // Clear any previous errors
-
       // Update URL with filters
-      const newParams = new URLSearchParams(window.location.search)
+      const newParams = new URLSearchParams()
       if (selectedFriendId && selectedFriendId !== "all") {
         newParams.set("friendId", selectedFriendId)
-      } else {
-        newParams.delete("friendId")
       }
 
       if (selectedMonth && selectedMonth !== "all") {
         newParams.set("month", selectedMonth)
-      } else {
-        newParams.delete("month")
       }
 
       if (selectedYear && selectedYear !== "all") {
         newParams.set("year", selectedYear)
-      } else {
-        newParams.delete("year")
       }
 
       router.push(`/contributions?${newParams.toString()}`)
+
+      // Close the filter dialog
+      setIsFilterDialogOpen(false)
     } catch (error) {
       console.error("Error applying filters:", error)
+      setIsFilterDialogOpen(false) // Close the dialog even on error
 
-      // Check for database connection error
-      if (error instanceof Error && error.message.includes("Database Connection Error")) {
-        setDatabaseError({
-          title: "Database Connection Error",
-          description: "Could not connect to the database. Please check that your database connection string is properly set in the environment variables."
-        })
-      } else {
-        toast({
-          title: "Error applying filters",
-          description: error instanceof Error
-            ? error.message
-            : "There was an error applying filters. Please try again.",
-          variant: "destructive",
-        })
-      }
-
-      // Always close the dialog on error
-      setIsFilterDialogOpen(false)
+      // Display error toast
+      toast({
+        title: "Error applying filters",
+        description: error instanceof Error
+          ? error.message
+          : "There was an error applying filters. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -166,7 +204,6 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
     setSelectedMonth("all")
     setSelectedYear("all")
     router.push("/contributions")
-    router.refresh()
   }
 
   const columns: ColumnDef<Contribution>[] = [
@@ -238,11 +275,25 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
         itemType="contribution"
       />
 
-      <div className="flex justify-end mb-4 space-x-2">
-        <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
-          <Filter className="mr-2 h-4 w-4" />
-          Filter
-        </Button>
+      <div className="flex justify-between items-center mb-4">
+        {selectedFriendId !== "all" && (
+          <div className="text-sm bg-muted inline-flex items-center px-3 py-1 rounded-md">
+            Filtered by: {friends.find(f => f.id.toString() === selectedFriendId)?.name}
+            <button
+              onClick={resetFilters}
+              className="ml-2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear filter"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        <div className="flex space-x-2 ml-auto">
+          <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
+            <Filter className="mr-2 h-4 w-4" />
+            Filter
+          </Button>
+        </div>
       </div>
 
       {databaseError ? (

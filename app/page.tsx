@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, IndianRupee, Users, BarChart3, PiggyBank } from "lucide-react"
 import { ensureDatabaseSetup } from "@/lib/db"
 import { runDatabaseMigrations } from "@/lib/db-migration"
+import { DashboardCharts } from "@/components/charts/dashboard-charts"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
@@ -70,6 +71,54 @@ export default async function Dashboard() {
       LIMIT 5
     `
 
+    // Get contribution data for pie chart
+    const contributionsByFriend = await sql`
+      SELECT fr.name, SUM(c.amount) as total_amount
+      FROM contributions c
+      JOIN friends fr ON c.friend_id = fr.id
+      GROUP BY fr.name
+      ORDER BY total_amount DESC
+      LIMIT 5
+    `
+
+    // Get transaction data for bar chart
+    const transactionsByType = await sql`
+      SELECT 
+        id,
+        transaction_type as name,
+        amount as total_amount,
+        transaction_category as category,
+        transaction_date
+      FROM transactions
+      ORDER BY transaction_date DESC
+      LIMIT 50
+    `
+
+    // Calculate total contribution amount for percentage calculation
+    const totalContributionAmount = contributionsByFriend.reduce(
+      (sum: number, item: any) => sum + Number(item.total_amount), 0
+    )
+
+    // Format contribution data for the pie chart
+    const contributionChartData = contributionsByFriend.map((item: any) => {
+      const amount = Number(item.total_amount)
+      const percentage = Math.round((amount / totalContributionAmount) * 100)
+      return {
+        name: item.name,
+        value: amount,
+        percentage
+      }
+    })
+
+    // Format transaction data for the bar chart
+    const transactionChartData = transactionsByType.map((item: any) => ({
+      name: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+      amount: Number(item.total_amount),
+      category: item.category,
+      transaction_date: item.transaction_date,
+      id: item.id
+    }))
+
     return (
       <div className="space-y-6">
         <PageHeader heading="Dashboard" text="Overview of your mutual funds, contributions, and transactions." />
@@ -119,6 +168,12 @@ export default async function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts Section */}
+        <DashboardCharts
+          contributionData={contributionChartData}
+          transactionData={transactionChartData}
+        />
 
         <Tabs defaultValue="funds">
           <TabsList>
