@@ -28,6 +28,10 @@ export default async function TransactionsPage() {
     const withdrawalsResult = await sql`
       SELECT SUM(amount) as total FROM transactions WHERE transaction_type = 'withdrawal'
     `
+    // Get bank charges totals
+    const ChargesResult = await sql`
+      SELECT SUM(amount) as total FROM transactions WHERE transaction_type = 'charges'
+    `
 
     // Get bank names
     const banksResult = await sql`
@@ -38,6 +42,7 @@ export default async function TransactionsPage() {
     const deposits = depositsResult[0]?.total || 0
     const withdrawals = withdrawalsResult[0]?.total || 0
     const bankCount = banksResult.length
+    const charges = ChargesResult[0]?.total || 0
 
     return (
       <TransactionsClient
@@ -46,6 +51,7 @@ export default async function TransactionsPage() {
         deposits={deposits}
         withdrawals={withdrawals}
         bankCount={bankCount}
+        charges={charges}
       />
     )
   } catch (error) {
@@ -53,3 +59,4 @@ export default async function TransactionsPage() {
     throw error
   }
 }
+

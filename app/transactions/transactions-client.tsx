@@ -23,6 +23,7 @@ interface TransactionsClientProps {
     deposits: number
     withdrawals: number
     bankCount: number
+    charges: number
 }
 
 export function TransactionsClient({
@@ -30,9 +31,12 @@ export function TransactionsClient({
     balance,
     deposits,
     withdrawals,
-    bankCount
+    bankCount,
+    charges
 }: TransactionsClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+    const total = charges + withdrawals + balance;
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -94,12 +98,17 @@ export function TransactionsClient({
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium">Connected Banks</CardTitle>
-                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Total Charges</CardTitle>
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{bankCount}</div>
-                        <p className="text-xs text-muted-foreground">Active banking connections</p>
+                        <div className="text-2xl font-bold text-red-500">
+                            {formatCurrency(charges)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {formatCurrency(charges)} + {formatCurrency(withdrawals)} + {formatCurrency(balance)}{' '}
+                            = <strong>{formatCurrency(deposits)}</strong>
+                        </p>
                     </CardContent>
                 </Card>
             </div>
