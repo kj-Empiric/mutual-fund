@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, IndianRupee, Users, BarChart3, PiggyBank } from "lucide-react"
+import { ArrowRight, IndianRupee, BarChart3, PiggyBank, CreditCard } from "lucide-react"
 import { ensureDatabaseSetup } from "@/lib/db"
 import { runDatabaseMigrations } from "@/lib/db-migration"
 import { DashboardCharts } from "@/components/charts/dashboard-charts"
@@ -59,6 +59,21 @@ export default async function Dashboard() {
       SELECT SUM(amount) as total
       FROM transactions
       WHERE transaction_category = 'mutual_fund'
+    `
+
+    // Get total charges
+    const totalCharges = await sql`
+      SELECT SUM(amount) as total FROM transactions WHERE transaction_type = 'charges'
+    `
+
+    // Get total deposits
+    const totalDeposits = await sql`
+      SELECT SUM(amount) as total FROM transactions WHERE transaction_type = 'deposit'
+    `
+
+    // Get total withdrawals
+    const totalWithdrawals = await sql`
+      SELECT SUM(amount) as total FROM transactions WHERE transaction_type = 'withdrawal'
     `
 
     // Get recent contributions
@@ -126,6 +141,11 @@ export default async function Dashboard() {
       id: item.id
     }))
 
+    const charges = Number(totalCharges[0]?.total || 0)
+    const deposits = Number(totalDeposits[0]?.total || 0)
+    const withdrawals = Number(totalWithdrawals[0]?.total || 0)
+    const balance = Number(currentBalance[0]?.balance || 0)
+
     return (
       <div className="space-y-6">
         <PageHeader heading="Dashboard" text="Overview of your mutual funds, contributions, and transactions." />
@@ -166,12 +186,14 @@ export default async function Dashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Friends</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Calculations</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{friendTotals.length}</div>
-              <p className="text-xs text-muted-foreground">Contributing to funds</p>
+              <div className="text-2xl font-bold text-green-500">{formatCurrency(deposits)}</div>
+              <p className="text-xs text-muted-foreground">
+                <span className="text-red-500">{formatCurrency(charges)}</span> + <span className="text-red-500">{formatCurrency(withdrawals)}</span> + <span className={balance >= 0 ? "text-green-500" : "text-red-500"}>{formatCurrency(balance)}</span> = <strong className="text-green-500">{formatCurrency(deposits)}</strong>
+              </p>
             </CardContent>
           </Card>
         </div>
