@@ -261,6 +261,7 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
                     <SelectItem value="withdrawal">Withdrawal</SelectItem>
                     <SelectItem value="charges">Charges</SelectItem>
                     <SelectItem value="mutual_funds">Mutual Funds</SelectItem>
+                    <SelectItem value="jenish_personal">Jenish Personal</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -288,6 +289,8 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
                     <SelectItem value="investment">Investment</SelectItem>
                     <SelectItem value="transfer">Transfer</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="jenish_personal_use">Jenis Personal USE</SelectItem>
+                    <SelectItem value="jenish_personal_spend">Jenis Personal SPEND</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
