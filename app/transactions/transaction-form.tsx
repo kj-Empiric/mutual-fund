@@ -319,13 +319,6 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="Kotak Mahindra">Kotak Mahindra</SelectItem>
-                  <SelectItem value="HDFC">HDFC</SelectItem>
-                  <SelectItem value="SBI">SBI</SelectItem>
-                  <SelectItem value="ICICI">ICICI</SelectItem>
-                  <SelectItem value="Axis">Axis</SelectItem>
-                  <SelectItem value="Bank of Baroda">Bank of Baroda</SelectItem>
-                  <SelectItem value="Punjab National Bank">Punjab National Bank</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
