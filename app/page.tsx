@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, IndianRupee, BarChart3, PiggyBank, CreditCard } from "lucide-react"
+import { ArrowRight, IndianRupee, BarChart3, PiggyBank, CreditCard, TrendingUp, Users, Wallet } from "lucide-react"
 import { ensureDatabaseSetup } from "@/lib/db"
 import { runDatabaseMigrations } from "@/lib/db-migration"
 import { DashboardCharts } from "@/components/charts/dashboard-charts"
@@ -148,50 +148,71 @@ export default async function Dashboard() {
 
     return (
       <div className="space-y-6">
-        <PageHeader heading="Dashboard" text="Overview of your mutual funds, contributions, and transactions." />
+        <PageHeader 
+          heading="Dashboard" 
+          text="Overview of your mutual funds, contributions, and transactions." 
+          variant="default"
+        />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Contributions</CardTitle>
-              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+        {/* Stats Cards - Mobile First Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="group hover:shadow-medium transition-all duration-300 border-0 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-blue-700 dark:text-blue-300">Total Contributions</CardTitle>
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/50">
+                <IndianRupee className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(Number(totalContributions[0]?.total || 0))}</div>
-              <p className="text-xs text-muted-foreground">Across all funds</p>
+              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                {formatCurrency(Number(totalContributions[0]?.total || 0))}
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Across all funds</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
-              <PiggyBank className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-medium transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-green-700 dark:text-green-300">Current Balance</CardTitle>
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/50">
+                <PiggyBank className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(Number(currentBalance[0]?.balance || 0))}</div>
-              <p className="text-xs text-muted-foreground">Available for investments</p>
+              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                {formatCurrency(Number(currentBalance[0]?.balance || 0))}
+              </div>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">Available for investments</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Investments</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-medium transition-all duration-300 border-0 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-purple-700 dark:text-purple-300">Total Investments</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50">
+                <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(Number(totalMutualFundInvestments[0]?.total || 0))}</div>
-              <p className="text-xs text-muted-foreground">In Mutual Fund</p>
+              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                {formatCurrency(Number(totalMutualFundInvestments[0]?.total || 0))}
+              </div>
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">In Mutual Fund</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Calculations</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+          <Card className="group hover:shadow-medium transition-all duration-300 border-0 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/50 dark:to-red-900/50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-red-700 dark:text-red-300">Total Charges</CardTitle>
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/50">
+                <CreditCard className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-500">{formatCurrency(deposits)}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+                {formatCurrency(charges)}
+              </div>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                 <span className="text-red-500">{formatCurrency(charges)}</span> + <span className="text-red-500">{formatCurrency(withdrawals)}</span> + <span className={balance >= 0 ? "text-green-500" : "text-red-500"}>{formatCurrency(balance)}</span> = <strong className="text-green-500">{formatCurrency(deposits)}</strong>
               </p>
             </CardContent>
@@ -199,46 +220,54 @@ export default async function Dashboard() {
         </div>
 
         {/* Charts Section */}
-        <DashboardCharts
-          contributionData={contributionChartData}
-          transactionData={transactionChartData}
-        />
+        <div className="space-y-6">
+          <DashboardCharts
+            contributionData={contributionChartData}
+            transactionData={transactionChartData}
+          />
+        </div>
 
-        <Tabs defaultValue="funds">
-          <TabsList>
-            <TabsTrigger value="funds">Funds</TabsTrigger>
-            <TabsTrigger value="friends">Friends</TabsTrigger>
-            <TabsTrigger value="recent">Recent Activity</TabsTrigger>
-          </TabsList>
+        {/* Tabs Section - Mobile Optimized */}
+        <Tabs defaultValue="funds" className="w-full">
+          <div className="flex justify-center mb-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3 h-12">
+              <TabsTrigger value="funds" className="text-sm font-medium">Funds</TabsTrigger>
+              <TabsTrigger value="friends" className="text-sm font-medium">Friends</TabsTrigger>
+              <TabsTrigger value="recent" className="text-sm font-medium">Recent</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="funds" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {fundTotals.map((fund) => (
-                <Card key={fund.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">{fund.name}</CardTitle>
+                <Card key={fund.id} className="group hover:shadow-medium transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold">{fund.name}</CardTitle>
                     <CardDescription>Total Invested</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{fund.total_amount ? formatCurrency(Number(fund.total_amount)) : 'N/A'}</div>
-                    <div className="mt-4">
-                      <Link href={`/funds/${fund.id}`}>
-                        <Button variant="outline" size="sm" className="w-full">
-                          View Fund Details
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
+                    <div className="text-2xl font-bold mb-4">
+                      {fund.total_amount ? formatCurrency(Number(fund.total_amount)) : 'N/A'}
                     </div>
+                    <Link href={`/funds/${fund.id}`}>
+                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        View Fund Details
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
 
               {fundTotals.length === 0 && (
-                <Card className="col-span-full">
-                  <CardContent className="pt-6 text-center">
-                    <p className="mb-4">No funds added yet.</p>
+                <Card className="col-span-full border-0 bg-muted/30">
+                  <CardContent className="pt-8 pb-8 text-center">
+                    <Wallet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="mb-4 text-lg font-medium">No funds added yet.</p>
                     <Link href="/funds">
-                      <Button>Add Your First Fund</Button>
+                      <Button size="lg" className="px-8">
+                        Add Your First Fund
+                      </Button>
                     </Link>
                   </CardContent>
                 </Card>
@@ -247,33 +276,36 @@ export default async function Dashboard() {
           </TabsContent>
 
           <TabsContent value="friends" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {friendTotals.map((friend) => (
-                <Card key={friend.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">{friend.name}</CardTitle>
+                <Card key={friend.id} className="group hover:shadow-medium transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold">{friend.name}</CardTitle>
                     <CardDescription>Total Contributions</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(Number(friend.total_amount || 0))}</div>
-                    <div className="mt-4">
-                      <Link href={`/contributions?friendId=${friend.id}`}>
-                        <Button variant="outline" size="sm" className="w-full">
-                          View Contributions
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
+                    <div className="text-2xl font-bold mb-4">
+                      {formatCurrency(Number(friend.total_amount || 0))}
                     </div>
+                    <Link href={`/contributions?friendId=${friend.id}`}>
+                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        View Contributions
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
 
               {friendTotals.length === 0 && (
-                <Card className="col-span-full">
-                  <CardContent className="pt-6 text-center">
-                    <p className="mb-4">No friends added yet.</p>
+                <Card className="col-span-full border-0 bg-muted/30">
+                  <CardContent className="pt-8 pb-8 text-center">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="mb-4 text-lg font-medium">No friends added yet.</p>
                     <Link href="/friends">
-                      <Button>Add Your First Friend</Button>
+                      <Button size="lg" className="px-8">
+                        Add Your First Friend
+                      </Button>
                     </Link>
                   </CardContent>
                 </Card>
@@ -282,23 +314,28 @@ export default async function Dashboard() {
           </TabsContent>
 
           <TabsContent value="recent" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card className="border-0 bg-card/50 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Recent Contributions</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <IndianRupee className="h-5 w-5" />
+                    Recent Contributions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {recentContributions.length > 0 ? (
                     <div className="space-y-4">
                       {recentContributions.map((contribution) => (
-                        <div key={contribution.id} className="flex items-center justify-between">
+                        <div key={contribution.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                           <div>
                             <p className="font-medium">{contribution.friend_name}</p>
                             <p className="text-sm text-muted-foreground">
                               {new Date(contribution.contribution_date).toLocaleDateString()}
                             </p>
                           </div>
-                          <div className="font-medium">{formatCurrency(Number(contribution.amount))}</div>
+                          <div className="font-bold text-green-600 dark:text-green-400">
+                            {formatCurrency(Number(contribution.amount))}
+                          </div>
                         </div>
                       ))}
                       <div className="pt-2">
@@ -311,36 +348,43 @@ export default async function Dashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-4">
-                      <p className="mb-4">No contributions yet.</p>
+                    <div className="text-center py-8">
+                      <IndianRupee className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="mb-4 text-lg font-medium">No contributions yet.</p>
                       <Link href="/contributions">
-                        <Button>Add Your First Contribution</Button>
+                        <Button size="lg" className="px-8">
+                          Add Your First Contribution
+                        </Button>
                       </Link>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-0 bg-card/50 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle>Recent Transactions</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Recent Transactions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {recentTransactions.length > 0 ? (
                     <div className="space-y-4">
                       {recentTransactions.map((transaction) => (
-                        <div key={transaction.id} className="flex items-center justify-between">
+                        <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                           <div>
-                            <p className="font-medium">{transaction.transaction_type}</p>
+                            <p className="font-medium capitalize">{transaction.transaction_type}</p>
                             <p className="text-sm text-muted-foreground">
                               {transaction.description} • {new Date(transaction.transaction_date).toLocaleDateString()}
                             </p>
                           </div>
                           <div
-                            className={`font-medium ${transaction.transaction_type === "deposit"
-                              ? "text-green-500"
-                              : "text-red-500"
-                              }`}
+                            className={`font-bold ${
+                              transaction.transaction_type === "deposit"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}
                           >
                             {transaction.transaction_type === "deposit" ? "+" : "-"}
                             {formatCurrency(Number(transaction.amount))}
@@ -357,10 +401,13 @@ export default async function Dashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-4">
-                      <p className="mb-4">No transactions yet.</p>
+                    <div className="text-center py-8">
+                      <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="mb-4 text-lg font-medium">No transactions yet.</p>
                       <Link href="/transactions">
-                        <Button>Add Your First Transaction</Button>
+                        <Button size="lg" className="px-8">
+                          Add Your First Transaction
+                        </Button>
                       </Link>
                     </div>
                   )}

@@ -42,8 +42,6 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
-  const [deletingTransactionId, setDeletingTransactionId] = useState<number | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -56,22 +54,15 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [selectedBank, setSelectedBank] = useState<string>("all")
 
-  const handleDeleteClick = (id: number) => {
-    setDeletingTransactionId(id)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const handleDelete = async () => {
-    if (!deletingTransactionId) return
-
+  const handleDelete = async (id: number) => {
     try {
-      const response = await fetch(`/api/transactions/${deletingTransactionId}`, {
+      const response = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
       })
 
       if (!response.ok) throw new Error("Failed to delete transaction")
 
-      setTransactions(transactions.filter((transaction) => transaction.id !== deletingTransactionId))
+      setTransactions(transactions.filter((transaction) => transaction.id !== id))
       toast({
         title: "Transaction deleted",
         description: "The transaction has been deleted successfully.",
@@ -247,7 +238,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(transaction.id)} className="text-red-600">
+              <DropdownMenuItem onClick={() => handleDelete(transaction.id)} className="text-red-600">
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -303,13 +294,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
         </Button>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmation
-        open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        itemType="transaction"
-      />
+
 
       {Object.keys(groupedByBank).length > 0 ? (
         <div className="space-y-8">
@@ -390,10 +375,14 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                     Date Range
                   </label>
                   <MonthYearPicker
-                    month={selectedMonth}
-                    year={selectedYear}
-                    onMonthChange={setSelectedMonth}
-                    onYearChange={setSelectedYear}
+                    value={selectedMonth !== "all" && selectedYear !== "all" ? new Date(parseInt(selectedYear), parseInt(selectedMonth), 1) : undefined}
+                    onChange={(date) => {
+                      if (date) {
+                        setSelectedMonth(date.getMonth().toString())
+                        setSelectedYear(date.getFullYear().toString())
+                      }
+                    }}
+                    variant="minimal"
                   />
                 </div>
 
