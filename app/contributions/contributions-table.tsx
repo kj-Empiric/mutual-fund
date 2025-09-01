@@ -9,13 +9,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
 import { ContributionForm } from "./contribution-form"
-import { MoreHorizontal, Pencil, Trash, Filter, RefreshCw } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash, Filter, RefreshCw, X, RotateCcw } from "lucide-react"
 import { formatCurrency } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MonthYearPicker } from "@/components/month-year-picker"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Contribution {
   id: number
@@ -51,6 +53,66 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   const [selectedFriendId, setSelectedFriendId] = useState<string>(searchParams.get("friendId") || "all")
   const [selectedMonth, setSelectedMonth] = useState<string>(searchParams.get("month") || "all")
   const [selectedYear, setSelectedYear] = useState<string>(searchParams.get("year") || "all")
+  
+  // Track active filters for display
+  const [activeFilters, setActiveFilters] = useState<Array<{
+    key: string
+    label: string
+    value: string
+    onRemove: () => void
+  }>>([])
+
+  // Update active filters based on current state
+  const updateActiveFilters = () => {
+    const filters: Array<{
+      key: string
+      label: string
+      value: string
+      onRemove: () => void
+    }> = []
+
+    if (selectedFriendId && selectedFriendId !== "all") {
+      const friend = friends.find(f => f.id.toString() === selectedFriendId)
+      if (friend) {
+        filters.push({
+          key: "friend",
+          label: "Friend",
+          value: friend.name,
+          onRemove: () => {
+            setSelectedFriendId("all")
+            applyFiltersWithState("all", selectedMonth, selectedYear)
+          }
+        })
+      }
+    }
+
+    if (selectedMonth && selectedMonth !== "all") {
+      const monthName = new Date(2000, parseInt(selectedMonth) - 1, 1).toLocaleString('default', { month: 'long' })
+      filters.push({
+        key: "month",
+        label: "Month",
+        value: monthName,
+        onRemove: () => {
+          setSelectedMonth("all")
+          applyFiltersWithState(selectedFriendId, "all", selectedYear)
+        }
+      })
+    }
+
+    if (selectedYear && selectedYear !== "all") {
+      filters.push({
+        key: "year",
+        label: "Year",
+        value: selectedYear,
+        onRemove: () => {
+          setSelectedYear("all")
+          applyFiltersWithState(selectedFriendId, selectedMonth, "all")
+        }
+      })
+    }
+
+    setActiveFilters(filters)
+  }
 
   // Apply filters when the component mounts or when URL parameters change
   useEffect(() => {
@@ -67,6 +129,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
       fetchFilteredContributions(friendId, month, year)
     }
   }, [searchParams])
+
+  // Update active filters when filter states change
+  useEffect(() => {
+    updateActiveFilters()
+  }, [selectedFriendId, selectedMonth, selectedYear, friends])
 
   const fetchFilteredContributions = async (friendId?: string | null, month?: string | null, year?: string | null) => {
     try {
@@ -164,24 +231,38 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
     }
   }
 
-  const applyFilters = async () => {
+  const applyFiltersWithState = async (friendId: string, month: string, year: string) => {
     try {
       // Update URL with filters
       const newParams = new URLSearchParams()
-      if (selectedFriendId && selectedFriendId !== "all") {
-        newParams.set("friendId", selectedFriendId)
+      if (friendId && friendId !== "all") {
+        newParams.set("friendId", friendId)
       }
 
-      if (selectedMonth && selectedMonth !== "all") {
-        newParams.set("month", selectedMonth)
+      if (month && month !== "all") {
+        newParams.set("month", month)
       }
 
-      if (selectedYear && selectedYear !== "all") {
-        newParams.set("year", selectedYear)
+      if (year && year !== "all") {
+        newParams.set("year", year)
       }
 
       router.push(`/contributions?${newParams.toString()}`)
+    } catch (error) {
+      console.error("Error applying filters:", error)
+      toast({
+        title: "Error applying filters",
+        description: error instanceof Error
+          ? error.message
+          : "There was an error applying filters. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
+  const applyFilters = async () => {
+    try {
+      await applyFiltersWithState(selectedFriendId, selectedMonth, selectedYear)
       // Close the filter dialog
       setIsFilterDialogOpen(false)
     } catch (error) {
@@ -204,6 +285,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
     setSelectedMonth("all")
     setSelectedYear("all")
     router.push("/contributions")
+  }
+
+  const clearAllFilters = () => {
+    resetFilters()
+    setIsFilterDialogOpen(false)
   }
 
   const columns: ColumnDef<Contribution>[] = [
@@ -275,24 +361,68 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
         itemType="contribution"
       />
 
-      <div className="flex justify-between items-center mb-4">
-        {selectedFriendId !== "all" && (
-          <div className="text-sm bg-muted inline-flex items-center px-3 py-1 rounded-md">
-            Filtered by: {friends.find(f => f.id.toString() === selectedFriendId)?.name}
-            <button
-              onClick={resetFilters}
-              className="ml-2 text-muted-foreground hover:text-foreground"
-              aria-label="Clear filter"
+      {/* Enhanced Filter Display */}
+      <div className="space-y-4 mb-6">
+        {/* Active Filters */}
+        <AnimatePresence>
+          {activeFilters.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex flex-wrap items-center gap-2"
             >
-              ×
-            </button>
+              <span className="text-sm font-medium text-muted-foreground">Active filters:</span>
+              {activeFilters.map((filter) => (
+                <motion.div
+                  key={filter.key}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1 px-3 py-1 text-sm"
+                  >
+                    <span className="font-medium">{filter.label}:</span>
+                    <span>{filter.value}</span>
+                    <button
+                      onClick={filter.onRemove}
+                      className="ml-1 hover:bg-muted-foreground/20 rounded-full p-0.5 transition-colors"
+                      aria-label={`Remove ${filter.label} filter`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                </motion.div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="mr-1 h-3 w-3" />
+                Clear all
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Filter Actions */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
+              <Filter className="mr-2 h-4 w-4" />
+              {activeFilters.length > 0 ? "Modify Filters" : "Add Filters"}
+            </Button>
+            {activeFilters.length > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {contributions.length} contribution{contributions.length !== 1 ? 's' : ''} found
+              </span>
+            )}
           </div>
-        )}
-        <div className="flex space-x-2 ml-auto">
-          <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
-            <Filter className="mr-2 h-4 w-4" />
-            Filter
-          </Button>
         </div>
       </div>
 
@@ -342,16 +472,44 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
         <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Filter Contributions</DialogTitle>
-            <DialogDescription>Filter contributions by friend, month, or year.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter Contributions
+            </DialogTitle>
+            <DialogDescription>
+              Filter contributions by friend, month, or year. You can combine multiple filters.
+            </DialogDescription>
           </DialogHeader>
+          
           <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Filters</CardTitle>
+                {activeFilters.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFilters}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="mr-1 h-3 w-3" />
+                    Clear All
+                  </Button>
+                )}
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            
+            <CardContent className="space-y-6">
+              {/* Friend Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Friend</label>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  Friend
+                  {selectedFriendId !== "all" && (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </label>
                 <Select value={selectedFriendId} onValueChange={setSelectedFriendId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Friends" />
@@ -367,8 +525,16 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
                 </Select>
               </div>
 
+              {/* Month/Year Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Month/Year</label>
+                <label className="text-sm font-medium flex items-center gap-2">
+                  Month/Year
+                  {(selectedMonth !== "all" || selectedYear !== "all") && (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </label>
                 <MonthYearPicker
                   month={selectedMonth}
                   year={selectedYear}
@@ -377,11 +543,21 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                <Button variant="outline" className="w-full" onClick={resetFilters}>
-                  Reset
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => {
+                    resetFilters()
+                    setIsFilterDialogOpen(false)
+                  }}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Reset All
                 </Button>
                 <Button className="w-full" onClick={applyFilters}>
+                  <Filter className="mr-2 h-4 w-4" />
                   Apply Filters
                 </Button>
               </div>
