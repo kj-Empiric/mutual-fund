@@ -17,80 +17,177 @@ export async function GET(request: Request) {
       bank,
     });
 
-    // Start with a base query
-    let query = sql`
-      SELECT * 
-      FROM transactions 
-      WHERE 1=1
-    `;
+    // Build the WHERE clause conditions
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
 
-    // Add filters using parameter binding
     if (month && month !== "all") {
       const monthInt = parseInt(month, 10);
+      conditions.push(`EXTRACT(MONTH FROM transaction_date) = $${paramIndex}`);
+      values.push(monthInt);
+      paramIndex++;
       console.log("Adding month filter:", monthInt);
-      query = sql`${query} AND EXTRACT(MONTH FROM transaction_date) = ${monthInt}`;
     }
 
     if (year && year !== "all") {
       const yearInt = parseInt(year, 10);
+      conditions.push(`EXTRACT(YEAR FROM transaction_date) = $${paramIndex}`);
+      values.push(yearInt);
+      paramIndex++;
       console.log("Adding year filter:", yearInt);
-      query = sql`${query} AND EXTRACT(YEAR FROM transaction_date) = ${yearInt}`;
     }
 
     if (category && category !== "all") {
+      conditions.push(`transaction_category = $${paramIndex}`);
+      values.push(category);
+      paramIndex++;
       console.log("Adding category filter:", category);
-      query = sql`${query} AND transaction_category = ${category}`;
     }
 
     if (bank && bank !== "all") {
+      conditions.push(`bank_name = $${paramIndex}`);
+      values.push(bank);
+      paramIndex++;
       console.log("Adding bank filter:", bank);
-      query = sql`${query} AND bank_name = ${bank}`;
     }
 
-    // Add the order by clause
-    query = sql`${query} ORDER BY transaction_date DESC`;
-    console.log("Final query built with filters");
+    // Build the WHERE clause
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    // Execute the query with better error handling
+    // Execute the transactions query
     try {
-      const transactions = await query;
-      console.log(
-        `Successfully fetched ${transactions?.length || 0} transactions`
-      );
+      let transactions;
+      let balanceResult;
 
-      // Calculate balance with a similar approach
-      let balanceQuery = sql`
-        SELECT SUM(
-          CASE 
-            WHEN transaction_type = 'deposit' THEN amount 
-            WHEN transaction_type = 'withdrawal' THEN -amount
-            ELSE 0
-          END
-        ) as balance
-        FROM transactions
-        WHERE 1=1
-      `;
+      if (conditions.length === 0) {
+        // No filters - use simple queries
+        transactions = await sql`
+          SELECT * FROM transactions ORDER BY transaction_date DESC
+        `;
+        
+        balanceResult = await sql`
+          SELECT SUM(
+            CASE 
+              WHEN transaction_type = 'deposit' THEN amount 
+              WHEN transaction_type = 'withdrawal' THEN -amount
+              ELSE 0
+            END
+          ) as balance
+          FROM transactions
+        `;
+      } else {
+        // Build dynamic queries with proper parameter binding
+        const whereClause = `WHERE ${conditions.join(" AND ")}`;
+        
+        // For transactions query
+        if (conditions.length === 1) {
+          if (month && month !== "all") {
+            const monthInt = parseInt(month, 10);
+            transactions = await sql`
+              SELECT * FROM transactions 
+              WHERE EXTRACT(MONTH FROM transaction_date) = ${monthInt}
+              ORDER BY transaction_date DESC
+            `;
+          } else if (year && year !== "all") {
+            const yearInt = parseInt(year, 10);
+            transactions = await sql`
+              SELECT * FROM transactions 
+              WHERE EXTRACT(YEAR FROM transaction_date) = ${yearInt}
+              ORDER BY transaction_date DESC
+            `;
+                   } else if (category && category !== "all") {
+           transactions = await sql`
+             SELECT * FROM transactions 
+             WHERE transaction_category = ${category}
+             ORDER BY transaction_date DESC
+           `;
+         } else if (bank && bank !== "all") {
+           transactions = await sql`
+             SELECT * FROM transactions 
+             WHERE bank_name = ${bank}
+             ORDER BY transaction_date DESC
+           `;
+         } else {
+           // Fallback for any unhandled single filter case
+           transactions = await sql`
+             SELECT * FROM transactions ORDER BY transaction_date DESC
+           `;
+         }
+       } else {
+         // Multiple filters - build query dynamically
+         console.log("Multiple filters detected, using fallback query");
+         
+         // For now, use a simple query and apply filters in memory
+         // This is a temporary solution until we implement proper dynamic SQL
+         transactions = await sql`
+           SELECT * FROM transactions ORDER BY transaction_date DESC
+         `;
+         
+         // Apply filters in memory as a temporary solution
+         if (month && month !== "all") {
+           const monthInt = parseInt(month, 10);
+           transactions = transactions.filter(t => 
+             new Date(t.transaction_date).getMonth() + 1 === monthInt
+           );
+         }
+         if (year && year !== "all") {
+           const yearInt = parseInt(year, 10);
+           transactions = transactions.filter(t => 
+             new Date(t.transaction_date).getFullYear() === yearInt
+           );
+         }
+         if (category && category !== "all") {
+           transactions = transactions.filter(t => t.transaction_category === category);
+         }
+         if (bank && bank !== "all") {
+           transactions = transactions.filter(t => t.bank_name === bank);
+         }
+       }
 
-      // Add the same filters to the balance query
-      if (month && month !== "all") {
-        const monthInt = parseInt(month, 10);
-        balanceQuery = sql`${balanceQuery} AND EXTRACT(MONTH FROM transaction_date) = ${monthInt}`;
+                 // Balance query with same filters
+         if (conditions.length === 1) {
+           // Single filter - use SQL
+           if (month && month !== "all" && year && year !== "all") {
+             const monthInt = parseInt(month, 10);
+             const yearInt = parseInt(year, 10);
+             balanceResult = await sql`
+               SELECT SUM(
+                 CASE 
+                   WHEN transaction_type = 'deposit' THEN amount 
+                   WHEN transaction_type = 'withdrawal' THEN -amount
+                   ELSE 0
+                 END
+               ) as balance
+               FROM transactions 
+               WHERE EXTRACT(MONTH FROM transaction_date) = ${monthInt}
+                 AND EXTRACT(YEAR FROM transaction_date) = ${yearInt}
+             `;
+           } else {
+             balanceResult = await sql`
+               SELECT SUM(
+                 CASE 
+                   WHEN transaction_type = 'deposit' THEN amount 
+                   WHEN transaction_type = 'withdrawal' THEN -amount
+                   ELSE 0
+                 END
+               ) as balance
+               FROM transactions
+             `;
+           }
+         } else {
+           // Multiple filters - calculate balance from filtered transactions
+           balanceResult = [{
+             balance: transactions.reduce((sum, t) => {
+               if (t.transaction_type === 'deposit') return sum + parseFloat(t.amount);
+               if (t.transaction_type === 'withdrawal') return sum - parseFloat(t.amount);
+               return sum;
+             }, 0)
+           }];
+         }
       }
 
-      if (year && year !== "all") {
-        const yearInt = parseInt(year, 10);
-        balanceQuery = sql`${balanceQuery} AND EXTRACT(YEAR FROM transaction_date) = ${yearInt}`;
-      }
-
-      if (category && category !== "all") {
-        balanceQuery = sql`${balanceQuery} AND transaction_category = ${category}`;
-      }
-
-      if (bank && bank !== "all") {
-        balanceQuery = sql`${balanceQuery} AND bank_name = ${bank}`;
-      }
-
-      const balanceResult = await balanceQuery;
+      console.log(`Successfully fetched ${transactions?.length || 0} transactions`);
       const balance = balanceResult[0]?.balance || 0;
       console.log("Calculated balance:", balance);
 
