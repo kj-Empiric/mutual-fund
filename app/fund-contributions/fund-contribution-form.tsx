@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
     amount: z.string().min(1, { message: "Please enter an amount." }),
@@ -29,6 +30,7 @@ interface FundContributionFormProps {
 export function FundContributionForm({ onSuccess }: FundContributionFormProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const { isKeyur } = useAuth()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -39,6 +41,14 @@ export function FundContributionForm({ onSuccess }: FundContributionFormProps) {
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!isKeyur) {
+            toast({
+                title: "Not allowed",
+                description: "Only Keyur can save fund contributions.",
+                variant: "destructive",
+            })
+            return
+        }
         setIsLoading(true)
 
         // Format date for API
@@ -140,7 +150,7 @@ export function FundContributionForm({ onSuccess }: FundContributionFormProps) {
                     )}
                 />
 
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || !isKeyur} title={!isKeyur ? "Only Keyur can save" : undefined}>
                     {isLoading ? "Adding..." : "Add Fund Contribution"}
                 </Button>
             </form>

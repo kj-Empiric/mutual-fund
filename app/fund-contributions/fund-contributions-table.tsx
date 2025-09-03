@@ -12,8 +12,9 @@ import { FundContributionForm } from "./fund-contribution-form"
 import { MoreHorizontal, Pencil, Trash, Filter, Plus } from "lucide-react"
 import { formatCurrency } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { DeleteDialog } from "@/components/delete-dialog"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/hooks/use-auth"
 
 interface FundContribution {
     id: number
@@ -29,6 +30,7 @@ interface FundContributionsTableProps {
 
 export function FundContributionsTable({ initialContributions }: FundContributionsTableProps) {
     const router = useRouter()
+    const { isKeyur } = useAuth()
     const [contributions, setContributions] = useState<FundContribution[]>(initialContributions)
     const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
     const [deletingContributionId, setDeletingContributionId] = useState<number | null>(null)
@@ -142,22 +144,26 @@ export function FundContributionsTable({ initialContributions }: FundContributio
             cell: ({ row }) => {
                 const contribution = row.original
 
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )
+                        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                        onClick={() => handleDeleteClick(contribution.id)} 
+                        className="text-red-600"
+                        disabled={!isKeyur}
+                    >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )
             },
             enableSorting: false,
         },
@@ -166,17 +172,22 @@ export function FundContributionsTable({ initialContributions }: FundContributio
     return (
         <>
             {/* Delete Confirmation Dialog */}
-            <DeleteConfirmation
+            <DeleteDialog
                 open={isDeleteDialogOpen}
-                setOpen={setIsDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
                 onConfirm={handleDelete}
                 itemType="fund contribution"
+                title="Delete Fund Contribution"
+                description="Are you sure you want to delete this fund contribution? This action cannot be undone."
             />
 
             <div className="flex justify-end mb-4 space-x-2">
                 <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button>
+                        <Button
+                            disabled={!isKeyur}
+                            title={!isKeyur ? "Only Keyur can add fund contributions" : undefined}
+                        >
                             <Plus className="mr-2 h-4 w-4" />
                             Add Fund Contribution
                         </Button>

@@ -13,18 +13,9 @@ import { MoreHorizontal, Pencil, Trash, Filter } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MonthYearPicker } from "@/components/month-year-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { DeleteDialog } from "@/components/delete-dialog"
 import { format } from "date-fns"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+
 import { usePermissions } from "@/hooks/use-permissions"
 
 interface Fund {
@@ -282,10 +273,19 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Purchase Month/Year</label>
                 <MonthYearPicker
-                  month={selectedMonth}
-                  year={selectedYear}
-                  onMonthChange={setSelectedMonth}
-                  onYearChange={setSelectedYear}
+                  value={(() => {
+                    if (selectedMonth === "all" && selectedYear === "all") return undefined
+                    const m = selectedMonth === "all" ? new Date().getMonth() : Number(selectedMonth) - 1
+                    const y = selectedYear === "all" ? new Date().getFullYear() : Number(selectedYear)
+                    return new Date(y, m, 1)
+                  })()}
+                  onChange={(date) => {
+                    if (!date) return
+                    const m = (date.getMonth() + 1).toString()
+                    const y = date.getFullYear().toString()
+                    setSelectedMonth(m)
+                    setSelectedYear(y)
+                  }}
                 />
               </div>
 
@@ -302,20 +302,14 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the fund "{funds.find(f => f.id === deletingFundId)?.name}". This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row space-y-2 sm:space-y-0">
-            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="w-full sm:w-auto">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        itemType="fund"
+        title="Delete Fund"
+        description={`This will permanently delete the fund "${funds.find(f => f.id === deletingFundId)?.name}". This action cannot be undone.`}
+      />
     </>
   )
 }
