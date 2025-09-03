@@ -14,6 +14,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "@/components/ui/use-toast"
 
 interface Contribution {
     id: number
@@ -36,6 +38,7 @@ interface ContributionsClientProps {
 
 export function ContributionsClient({ initialContributions, friends }: ContributionsClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const { isKeyur } = useAuth()
 
     return (
         <div className="space-y-4 sm:space-y-6">
@@ -44,7 +47,20 @@ export function ContributionsClient({ initialContributions, friends }: Contribut
 
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button className="w-full sm:w-auto">
+                        <Button
+                            className="w-full sm:w-auto"
+                            disabled={!isKeyur}
+                            title={!isKeyur ? "Only Keyur can add contributions" : undefined}
+                            onClick={() => {
+                                if (!isKeyur) {
+                                    toast({
+                                        title: "Not allowed",
+                                        description: "Only Keyur can create new contributions.",
+                                        variant: "destructive",
+                                    })
+                                }
+                            }}
+                        >
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add Contribution
                         </Button>

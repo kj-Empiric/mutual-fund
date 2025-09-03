@@ -18,6 +18,7 @@ import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Contribution {
   id: number
@@ -48,6 +49,7 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   const [deletingContributionId, setDeletingContributionId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [databaseError, setDatabaseError] = useState<{ title: string; description: string } | null>(null)
+  const { isKeyur } = useAuth()
 
   // Filter states
   const [selectedFriendId, setSelectedFriendId] = useState<string>(searchParams.get("friendId") || "all")
@@ -335,11 +337,16 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
                   setEditingContribution(contribution)
                   setIsEditDialogOpen(true)
                 }}
+                disabled={!isKeyur}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
+              <DropdownMenuItem
+                onClick={() => handleDeleteClick(contribution.id)}
+                className="text-red-600"
+                disabled={!isKeyur}
+              >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -354,12 +361,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   return (
     <>
       {/* Delete Confirmation Dialog */}
-      <DeleteConfirmation
-        open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        itemType="contribution"
-      />
+      {isKeyur && (
+        <DeleteConfirmation
+          onConfirm={handleDelete}
+        />
+      )}
 
       {/* Enhanced Filter Display */}
       <div className="space-y-4 mb-6">
@@ -535,11 +541,21 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
                     </Badge>
                   )}
                 </label>
+                {/* Using our MonthYearPicker's single Date API to compute month/year */}
                 <MonthYearPicker
-                  month={selectedMonth}
-                  year={selectedYear}
-                  onMonthChange={setSelectedMonth}
-                  onYearChange={setSelectedYear}
+                  value={(() => {
+                    if (selectedMonth === "all" && selectedYear === "all") return undefined
+                    const m = selectedMonth === "all" ? new Date().getMonth() : Number(selectedMonth) - 1
+                    const y = selectedYear === "all" ? new Date().getFullYear() : Number(selectedYear)
+                    return new Date(y, m, 1)
+                  })()}
+                  onChange={(date) => {
+                    if (!date) return
+                    const m = (date.getMonth() + 1).toString()
+                    const y = date.getFullYear().toString()
+                    setSelectedMonth(m)
+                    setSelectedYear(y)
+                  }}
                 />
               </div>
 

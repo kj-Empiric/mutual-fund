@@ -16,6 +16,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
+import { toast } from "@/components/ui/use-toast"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
@@ -24,6 +26,7 @@ export default function FriendsPage() {
   const router = useRouter()
   const [friends, setFriends] = useState<any[]>([])
   const closeRef = useRef<HTMLButtonElement>(null)
+  const { isKeyur } = useAuth()
 
   // Function to fetch friends
   const fetchFriends = async () => {
@@ -61,7 +64,19 @@ export default function FriendsPage() {
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button>
+            <Button
+              disabled={!isKeyur}
+              title={!isKeyur ? "Only Keyur can add friends" : undefined}
+              onClick={() => {
+                if (!isKeyur) {
+                  toast({
+                    title: "Not allowed",
+                    description: "Only Keyur can create new friends.",
+                    variant: "destructive",
+                  })
+                }
+              }}
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Friend
             </Button>

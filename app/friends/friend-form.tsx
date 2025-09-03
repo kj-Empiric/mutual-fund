@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -36,6 +37,7 @@ export function FriendForm({ friend, onSuccess }: FriendFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPasswordField, setShowPasswordField] = useState(false)
+  const { isKeyur } = useAuth()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -63,6 +65,14 @@ export function FriendForm({ friend, onSuccess }: FriendFormProps) {
   }, [email, role, friend, form])
 
   async function onSubmit(values: FormValues) {
+    if (!isKeyur) {
+      toast({
+        title: "Not allowed",
+        description: "Only Keyur can save friends.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     try {
@@ -240,7 +250,7 @@ export function FriendForm({ friend, onSuccess }: FriendFormProps) {
           />
         )}
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading || !isKeyur} title={!isKeyur ? "Only Keyur can save" : undefined}>
           {isLoading ? "Saving..." : friend ? "Update Friend" : "Add Friend"}
         </Button>
       </form>

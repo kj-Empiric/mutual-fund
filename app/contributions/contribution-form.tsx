@@ -16,6 +16,7 @@ import { format, isValid, parse, getYear, getMonth, setMonth, setYear, addYears 
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   friend_id: z.string().min(1, { message: "Please select a friend." }),
@@ -52,6 +53,7 @@ interface ContributionFormProps {
 export function ContributionForm({ contribution, friends, funds = [], onSuccess }: ContributionFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const { isKeyur } = useAuth()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,6 +66,14 @@ export function ContributionForm({ contribution, friends, funds = [], onSuccess 
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isKeyur) {
+      toast({
+        title: "Not allowed",
+        description: "Only Keyur can save contributions.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     // Convert string IDs to numbers and format date
@@ -411,7 +421,7 @@ export function ContributionForm({ contribution, friends, funds = [], onSuccess 
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading || !isKeyur} title={!isKeyur ? "Only Keyur can save" : undefined}>
           {isLoading ? "Saving..." : contribution ? "Update Contribution" : "Add Contribution"}
         </Button>
       </form>

@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast"
 import { FriendForm } from "./friend-form"
 import { MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { useAuth } from "@/hooks/use-auth"
 
 interface Friend {
   id: number
@@ -32,6 +33,7 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [deletingFriendId, setDeletingFriendId] = useState<number | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const { isKeyur } = useAuth()
 
   // Update friends when initialFriends changes
   useEffect(() => {
@@ -126,11 +128,12 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
                   setEditingFriend(friend)
                   setIsEditDialogOpen(true)
                 }}
+                disabled={!isKeyur}
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(friend.id)} className="text-red-600">
+              <DropdownMenuItem onClick={() => handleDeleteClick(friend.id)} className="text-red-600" disabled={!isKeyur}>
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -149,13 +152,11 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <DeleteConfirmation
-        open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onConfirm={handleDelete}
-        itemType="friend"
-        additionalWarning="This will also delete all their contributions."
-      />
+      {isKeyur && (
+        <DeleteConfirmation
+          onConfirm={handleDelete}
+        />
+      )}
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
