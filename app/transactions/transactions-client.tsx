@@ -16,6 +16,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface TransactionsClientProps {
     transactionsData: any[]
@@ -35,6 +36,7 @@ export function TransactionsClient({
     charges
 }: TransactionsClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const { canCreate } = usePermissions()
 
     const total = charges + withdrawals + balance;
 
@@ -43,13 +45,14 @@ export function TransactionsClient({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                 <PageHeader heading="Banking & Transactions" text="Track your deposits, withdrawals, and transfers." />
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="w-full sm:w-auto">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Transaction
-                        </Button>
-                    </DialogTrigger>
+                {canCreate && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="w-full sm:w-auto">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Transaction
+                            </Button>
+                        </DialogTrigger>
                     <DialogContent className="sm:max-w-[525px]">
                         <DialogHeader>
                             <DialogTitle>Add New Transaction</DialogTitle>
@@ -58,6 +61,7 @@ export function TransactionsClient({
                         <TransactionForm onSuccess={() => setIsDialogOpen(false)} />
                     </DialogContent>
                 </Dialog>
+                )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

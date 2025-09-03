@@ -1,17 +1,17 @@
-// Create this file at hooks/use-permissions.ts
-import { useSession } from "next-auth/react";
+"use client"
+
+import { useAuth } from "./use-auth"
 
 export function usePermissions() {
-  const { data: session } = useSession();
-  const permissions = (session?.user as any)?.role?.permissions || [];
+  const { isKeyur, isAuthenticated } = useAuth()
 
   return {
-    isAdmin: permissions.includes("admin"),
-    canCreate: permissions.includes("create") || permissions.includes("admin"),
-    canRead: permissions.includes("read") || permissions.includes("admin"),
-    canUpdate: permissions.includes("update") || permissions.includes("admin"),
-    canDelete: permissions.includes("delete") || permissions.includes("admin"),
-    canView: permissions.includes("view") || permissions.includes("admin"),
-    permissions,
-  };
+    isAdmin: isKeyur,
+    canCreate: isKeyur,
+    canRead: isAuthenticated, // All authenticated users can read
+    canUpdate: isKeyur,
+    canDelete: isKeyur,
+    canView: isAuthenticated, // All authenticated users can view
+    permissions: isKeyur ? ["admin", "create", "read", "update", "delete", "view"] : ["read", "view"],
+  }
 }

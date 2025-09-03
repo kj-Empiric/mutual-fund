@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface Fund {
   id: number
@@ -42,6 +43,7 @@ interface FundsTableProps {
 
 export function FundsTable({ initialFunds }: FundsTableProps) {
   const router = useRouter()
+  const { canUpdate, canDelete } = usePermissions()
   const [funds, setFunds] = useState<Fund[]>(initialFunds)
   const [editingFund, setEditingFund] = useState<Fund | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -181,6 +183,11 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
       cell: ({ row }) => {
         const fund = row.original
 
+        // Don't show actions if user doesn't have permissions
+        if (!canUpdate && !canDelete) {
+          return null
+        }
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -190,19 +197,23 @@ export function FundsTable({ initialFunds }: FundsTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingFund(fund)
-                  setIsEditDialogOpen(true)
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(fund.id)} className="text-red-600">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingFund(fund)
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={() => handleDeleteClick(fund.id)} className="text-red-600">
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
