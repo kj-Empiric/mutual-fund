@@ -15,6 +15,7 @@ import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { format, isValid, parse, getYear, getMonth, setMonth, setYear, addYears } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   amount: z.string().min(1, { message: "Please enter an amount." }),
@@ -55,6 +56,7 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
   const [showCustomBankInput, setShowCustomBankInput] = useState(transaction?.bank_name === "Other")
   const [showFriendInput, setShowFriendInput] = useState(transaction?.transaction_type === "deposit")
   const [showCustomFriendInput, setShowCustomFriendInput] = useState(transaction?.friend_name === "Other")
+  const { isKeyur } = useAuth()
   const [friends, setFriends] = useState<Friend[]>([])
   const [loadingFriends, setLoadingFriends] = useState(false)
 
@@ -105,6 +107,14 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
   }, [transactionType])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isKeyur) {
+      toast({
+        title: "Not allowed",
+        description: "Only Keyur can save transactions.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     // Use custom bank name if "Other" is selected
@@ -637,7 +647,7 @@ export function TransactionForm({ transaction, onSuccess }: TransactionFormProps
           />
         )}
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading || !isKeyur} title={!isKeyur ? "Only Keyur can save" : undefined}>
           {isLoading ? "Saving..." : transaction ? "Update Transaction" : "Add Transaction"}
         </Button>
       </form>

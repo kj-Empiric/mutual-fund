@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { MonthYearPicker } from "@/components/month-year-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { DeleteDialog } from "@/components/delete-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -55,16 +55,25 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString())
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [selectedBank, setSelectedBank] = useState<string>("all")
+  const [deletingTransactionId, setDeletingTransactionId] = useState<number | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (id: number) => {
+    setDeletingTransactionId(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!deletingTransactionId) return
+
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetch(`/api/transactions/${deletingTransactionId}`, {
         method: "DELETE",
       })
 
       if (!response.ok) throw new Error("Failed to delete transaction")
 
-      setTransactions(transactions.filter((transaction) => transaction.id !== id))
+      setTransactions(transactions.filter((transaction) => transaction.id !== deletingTransactionId))
       toast({
         title: "Transaction deleted",
         description: "The transaction has been deleted successfully.",
@@ -248,7 +257,7 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
                 </DropdownMenuItem>
               )}
               {canDelete && (
-                <DropdownMenuItem onClick={() => handleDelete(transaction.id)} className="text-red-600">
+                <DropdownMenuItem onClick={() => handleDeleteClick(transaction.id)} className="text-red-600">
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
@@ -290,6 +299,16 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
 
   return (
     <>
+      {/* Delete Confirmation Dialog */}
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        itemType="transaction"
+        title="Delete Transaction"
+        description="Are you sure you want to delete this transaction? This action cannot be undone."
+      />
+
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />

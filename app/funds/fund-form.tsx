@@ -15,6 +15,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -30,7 +31,7 @@ interface FundFormProps {
   fund?: {
     id: number
     name: string
-    price: string
+    price: string | number | null
     fund_type: string | null
     description: string | null
     purchase_date?: string
@@ -41,12 +42,13 @@ interface FundFormProps {
 export function FundForm({ fund, onSuccess }: FundFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const { isKeyur } = useAuth()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: fund?.name || "",
-      price: fund?.price || "",
+      price: fund?.price ? String(fund.price) : "",
       fund_type: fund?.fund_type || "",
       description: fund?.description || "",
       purchase_date: fund?.purchase_date ? new Date(fund.purchase_date) : new Date(),
@@ -54,6 +56,14 @@ export function FundForm({ fund, onSuccess }: FundFormProps) {
   })
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!isKeyur) {
+      toast({
+        title: "Not allowed",
+        description: "Only Keyur can save funds.",
+        variant: "destructive",
+      })
+      return
+    }
     setIsLoading(true)
 
     // Format date for API
@@ -404,7 +414,7 @@ export function FundForm({ fund, onSuccess }: FundFormProps) {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading || !isKeyur} title={!isKeyur ? "Only Keyur can save" : undefined}>
           {isLoading ? "Saving..." : fund ? "Update Mutual Fund" : "Add Mutual Fund"}
         </Button>
       </form>

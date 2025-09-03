@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "@/components/ui/use-toast"
 import { FriendForm } from "./friend-form"
 import { MoreHorizontal, Pencil, Trash } from "lucide-react"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { DeleteDialog } from "@/components/delete-dialog"
 import { useAuth } from "@/hooks/use-auth"
 
 interface Friend {
@@ -152,11 +152,15 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      {isKeyur && (
-        <DeleteConfirmation
-          onConfirm={handleDelete}
-        />
-      )}
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        itemType="friend"
+        title="Delete Friend"
+        description="Are you sure you want to delete this friend? This action cannot be undone."
+        additionalWarning="This will also delete all their contributions."
+      />
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

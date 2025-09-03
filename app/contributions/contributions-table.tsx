@@ -14,7 +14,7 @@ import { formatCurrency } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MonthYearPicker } from "@/components/month-year-picker"
-import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { DeleteDialog } from "@/components/delete-dialog"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
@@ -361,11 +361,14 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
   return (
     <>
       {/* Delete Confirmation Dialog */}
-      {isKeyur && (
-        <DeleteConfirmation
-          onConfirm={handleDelete}
-        />
-      )}
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        itemType="contribution"
+        title="Delete Contribution"
+        description="Are you sure you want to delete this contribution? This action cannot be undone."
+      />
 
       {/* Enhanced Filter Display */}
       <div className="space-y-4 mb-6">
