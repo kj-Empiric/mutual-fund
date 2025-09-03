@@ -16,12 +16,14 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { usePermissions } from "@/hooks/use-permissions"
 
 // Force dynamic rendering to ensure fresh data
 export const dynamic = "force-dynamic"
 
 export default function FriendsPage() {
   const router = useRouter()
+  const { canCreate } = usePermissions()
   const [friends, setFriends] = useState<any[]>([])
   const closeRef = useRef<HTMLButtonElement>(null)
 
@@ -59,22 +61,24 @@ export default function FriendsPage() {
       <div className="flex items-center justify-between">
         <PageHeader heading="Friends" text="Manage your friends who contribute to mutual funds." />
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Friend
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Friend</DialogTitle>
-              <DialogDescription>Add a new friend who will contribute to mutual funds.</DialogDescription>
-            </DialogHeader>
-            <FriendForm onSuccess={handleSuccess} />
-            <DialogClose ref={closeRef} className="hidden" />
-          </DialogContent>
-        </Dialog>
+        {canCreate && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Friend
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Friend</DialogTitle>
+                <DialogDescription>Add a new friend who will contribute to mutual funds.</DialogDescription>
+              </DialogHeader>
+              <FriendForm onSuccess={handleSuccess} />
+              <DialogClose ref={closeRef} className="hidden" />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <FriendsTable initialFriends={friends} />

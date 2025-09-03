@@ -14,6 +14,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface Contribution {
     id: number
@@ -36,31 +37,34 @@ interface ContributionsClientProps {
 
 export function ContributionsClient({ initialContributions, friends }: ContributionsClientProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const { canCreate } = usePermissions()
 
     return (
         <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                 <PageHeader heading="Contributions" text="Track contributions to mutual funds." />
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="w-full sm:w-auto">
-                            <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Contribution
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Add New Contribution</DialogTitle>
-                            <DialogDescription>Record a new contribution.</DialogDescription>
-                        </DialogHeader>
-                        <ContributionForm
-                            friends={friends}
-                            funds={[]}
-                            onSuccess={() => setIsDialogOpen(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
+                {canCreate && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="w-full sm:w-auto">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Contribution
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Add New Contribution</DialogTitle>
+                                <DialogDescription>Record a new contribution.</DialogDescription>
+                            </DialogHeader>
+                            <ContributionForm
+                                friends={friends}
+                                funds={[]}
+                                onSuccess={() => setIsDialogOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <ContributionsTable initialContributions={initialContributions} friends={friends} />

@@ -11,6 +11,7 @@ import { toast } from "@/components/ui/use-toast"
 import { FriendForm } from "./friend-form"
 import { MoreHorizontal, Pencil, Trash } from "lucide-react"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface Friend {
   id: number
@@ -27,6 +28,7 @@ interface FriendsTableProps {
 
 export function FriendsTable({ initialFriends }: FriendsTableProps) {
   const router = useRouter()
+  const { canUpdate, canDelete } = usePermissions()
   const [friends, setFriends] = useState<any[]>(initialFriends)
   const [editingFriend, setEditingFriend] = useState<Friend | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -112,6 +114,11 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
       cell: ({ row }) => {
         const friend = row.original
 
+        // Don't show actions if user doesn't have permissions
+        if (!canUpdate && !canDelete) {
+          return null
+        }
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -121,19 +128,23 @@ export function FriendsTable({ initialFriends }: FriendsTableProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingFriend(friend)
-                  setIsEditDialogOpen(true)
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(friend.id)} className="text-red-600">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingFriend(friend)
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={() => handleDeleteClick(friend.id)} className="text-red-600">
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )

@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from "@/components/site-header"
 import { MobileSiteHeader } from "@/components/mobile-site-header"
+import { AuthProvider } from "@/components/auth/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,21 +27,23 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} h-full`}>
         <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            {/* Desktop header */}
-            <div className="hidden md:block">
-              <SiteHeader />
-            </div>
+          <AuthProvider>
+            <div className="flex min-h-screen flex-col">
+              {/* Desktop header */}
+              <div className="hidden md:block">
+                <SiteHeader />
+              </div>
 
-            {/* Mobile header */}
-            <div className="md:hidden">
-              <MobileSiteHeader />
-            </div>
+              {/* Mobile header */}
+              <div className="md:hidden">
+                <MobileSiteHeader />
+              </div>
 
-            <main className="flex-1">
-              <div className="container px-4 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</div>
-            </main>
-          </div>
+              <main className="flex-1">
+                <div className="container px-4 py-4 sm:px-6 sm:py-6 lg:px-8">{children}</div>
+              </main>
+            </div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

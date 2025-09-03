@@ -18,6 +18,7 @@ import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface Contribution {
   id: number
@@ -41,6 +42,7 @@ interface ContributionsTableProps {
 export function ContributionsTable({ initialContributions, friends }: ContributionsTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { canUpdate, canDelete } = usePermissions()
   const [contributions, setContributions] = useState<Contribution[]>(initialContributions)
   const [editingContribution, setEditingContribution] = useState<Contribution | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -321,6 +323,11 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
       cell: ({ row }) => {
         const contribution = row.original
 
+        // Don't show actions if user doesn't have permissions
+        if (!canUpdate && !canDelete) {
+          return null
+        }
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -330,19 +337,23 @@ export function ContributionsTable({ initialContributions, friends }: Contributi
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingContribution(contribution)
-                  setIsEditDialogOpen(true)
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingContribution(contribution)
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )

@@ -24,7 +24,7 @@ export function UniversalEntryForm() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Access Denied</AlertTitle>
                 <AlertDescription>
-                    You don't have permission to create new entries.
+                    Only users named "Keyur" can create new entries.
                 </AlertDescription>
             </Alert>
         )

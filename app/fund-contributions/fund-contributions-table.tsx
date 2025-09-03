@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface FundContribution {
     id: number
@@ -29,6 +30,7 @@ interface FundContributionsTableProps {
 
 export function FundContributionsTable({ initialContributions }: FundContributionsTableProps) {
     const router = useRouter()
+    const { canCreate, canDelete } = usePermissions()
     const [contributions, setContributions] = useState<FundContribution[]>(initialContributions)
     const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
     const [deletingContributionId, setDeletingContributionId] = useState<number | null>(null)
@@ -142,6 +144,11 @@ export function FundContributionsTable({ initialContributions }: FundContributio
             cell: ({ row }) => {
                 const contribution = row.original
 
+                // Don't show actions if user doesn't have permissions
+                if (!canDelete) {
+                    return null
+                }
+
                 return (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -151,10 +158,12 @@ export function FundContributionsTable({ initialContributions }: FundContributio
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
-                            </DropdownMenuItem>
+                            {canDelete && (
+                                <DropdownMenuItem onClick={() => handleDeleteClick(contribution.id)} className="text-red-600">
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )
@@ -173,28 +182,30 @@ export function FundContributionsTable({ initialContributions }: FundContributio
                 itemType="fund contribution"
             />
 
-            <div className="flex justify-end mb-4 space-x-2">
-                <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Fund Contribution
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Add Fund Contribution</DialogTitle>
-                            <DialogDescription>Add a new mutual fund contribution.</DialogDescription>
-                        </DialogHeader>
-                        <FundContributionForm
-                            onSuccess={() => {
-                                setIsFormDialogOpen(false)
-                                router.refresh()
-                            }}
-                        />
-                    </DialogContent>
-                </Dialog>
-            </div>
+            {canCreate && (
+                <div className="flex justify-end mb-4 space-x-2">
+                    <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Fund Contribution
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-full sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Add Fund Contribution</DialogTitle>
+                                <DialogDescription>Add a new mutual fund contribution.</DialogDescription>
+                            </DialogHeader>
+                            <FundContributionForm
+                                onSuccess={() => {
+                                    setIsFormDialogOpen(false)
+                                    router.refresh()
+                                }}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            )}
 
             {databaseError ? (
                 <Alert className="mt-4">
