@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Menu, X, Sun, Moon, Monitor } from "lucide-react"
 import { useTheme } from "next-themes"
 import { motion, AnimatePresence } from "framer-motion"
+import { UserInfo } from "@/components/auth/user-info"
 
 export function MobileSiteHeader() {
   const [open, setOpen] = React.useState(false)
@@ -38,8 +39,11 @@ export function MobileSiteHeader() {
           </span>
         </Link>
 
-        {/* Right side - Theme toggle and menu */}
+        {/* Right side - User info, Theme toggle and menu */}
         <div className="flex items-center space-x-2">
+          {/* User Info */}
+          <UserInfo />
+          
           {/* Theme toggle */}
           <motion.div
             whileHover={{ scale: 1.05 }}

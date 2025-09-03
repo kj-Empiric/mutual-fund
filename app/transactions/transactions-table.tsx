@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { DeleteConfirmation } from "@/components/delete-confirmation"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+import { usePermissions } from "@/hooks/use-permissions"
 
 interface Transaction {
   id: number
@@ -37,6 +38,7 @@ interface TransactionsTableProps {
 
 export function TransactionsTable({ initialTransactions, initialBalance }: TransactionsTableProps) {
   const router = useRouter()
+  const { canUpdate, canDelete } = usePermissions()
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
   const [balance, setBalance] = useState<number>(initialBalance)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
@@ -220,6 +222,11 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
       cell: ({ row }) => {
         const transaction = row.original
 
+        // Don't show actions if user doesn't have permissions
+        if (!canUpdate && !canDelete) {
+          return null
+        }
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -229,19 +236,23 @@ export function TransactionsTable({ initialTransactions, initialBalance }: Trans
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingTransaction(transaction)
-                  setIsEditDialogOpen(true)
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDelete(transaction.id)} className="text-red-600">
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
+              {canUpdate && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingTransaction(transaction)
+                    setIsEditDialogOpen(true)
+                  }}
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem onClick={() => handleDelete(transaction.id)} className="text-red-600">
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )
