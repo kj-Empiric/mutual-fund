@@ -1,87 +1,128 @@
+Here’s an enhanced and polished version of your `README.md` file with improved formatting, better readability, and a more professional structure that will look great on GitHub.  
+
+***
+
 # Mutual Funds Tracker
 
-A web application to track mutual fund investments, contributions, and transactions.
+A web application to track **mutual fund investments, contributions, and transactions** with a clean dashboard and reporting tools.
 
-## Prerequisites
+***
 
-- Node.js (v18 or newer)
-- pnpm (v7 or newer)
+## 🚀 Features
 
-## Installation
+- Track multiple mutual funds by ticker symbols and prices  
+- Record transactions (buy/sell) for each fund  
+- Manage contributions from different individuals  
+- View a dashboard with summary statistics  
+- Generate reports and visualizations of fund performance  
 
-1. Clone the repository
-2. Install dependencies with pnpm:
+***
 
-```bash
-pnpm install
-```
+## 🛠️ Prerequisites
 
-3. Create a `.env.local` file in the root directory with the following variables:
+- [Node.js](https://nodejs.org/) **v18+**  
+- [pnpm](https://pnpm.io/) **v7+**
 
-```
-DATABASE_URL=postgresql://neondb_owner:npg_lHG3DzwEC6fQ@ep-autumn-mud-a4qeek5r-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
-```
+***
 
-## Development
+## ⚙️ Installation
 
-Run the development server:
+1. Clone the repository  
+
+   ```bash
+   git clone https://github.com/your-username/mutual-funds-tracker.git
+   cd mutual-funds-tracker
+   ```
+
+2. Install dependencies  
+
+   ```bash
+   pnpm install
+   ```
+
+3. Create a `.env.local` file in the root directory and add your database URL:  
+
+   ```
+   DATABASE_URL=postgresql://neondb_owner:npg_lHG3DzwEC6fQ@ep-autumn-mud-a4qeek5r-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+   ```
+
+***
+
+## 🖥️ Development
+
+Start the development server:
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+Then, open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Database Setup
+***
 
-After starting the development server, initialize the database by accessing the setup endpoint:
+## 🗃️ Database Setup
+
+Once the development server is running, initialize the database by visiting:
 
 ```
 http://localhost:3000/api/setup
 ```
 
-This will create the necessary database tables if they don't already exist:
+This will automatically create the required tables if they don’t already exist:
 
-- `funds` - Stores mutual fund information
-- `transactions` - Records fund transactions
-- `contributions` - Tracks monetary contributions
-- `friends` - Manages individuals contributing to funds
+- `funds` → Stores mutual fund information  
+- `transactions` → Records buy/sell transactions  
+- `contributions` → Tracks monetary contributions  
+- `friends` → Manages individuals contributing to funds  
 
-## Application Features
+***
 
-The application allows you to:
+## 📦 Build for Production
 
-1. Track multiple mutual funds with their ticker symbols and prices
-2. Record transactions (buy/sell) for each fund
-3. Manage contributions from different individuals
-4. View a dashboard with summary statistics
-5. Generate reports and visualizations of fund performance
-
-## Build for Production
+Build and run in production mode:
 
 ```bash
 pnpm build
 pnpm start
 ```
 
-## Project Structure
+***
 
-- `app/` - Next.js pages and API routes
-  - `page.tsx` - Main dashboard
-  - `funds/` - Fund management
-  - `transactions/` - Transaction management
-  - `contributions/` - Contribution management
-  - `friends/` - Friend management
-  - `api/` - Backend API endpoints
-- `components/` - Reusable UI components
-- `lib/` - Utility functions and database configuration
-- `public/` - Static assets
-- `styles/` - Global stylesheets
+## 📁 Project Structure
 
-## Technology Stack
+```
+├── app/                # Next.js pages and API routes
+│   ├── page.tsx        # Main dashboard
+│   ├── funds/          # Fund management
+│   ├── transactions/   # Transaction management
+│   ├── contributions/  # Contribution management
+│   ├── friends/        # Friend management
+│   └── api/            # Backend API endpoints
+│
+├── components/         # Reusable UI components
+├── lib/                # Utility functions and database config
+├── public/             # Static assets
+├── styles/             # Global stylesheets
+└── README.md
+```
 
-- Next.js - React framework
-- TypeScript - Type-safe JavaScript
-- Tailwind CSS - Utility-first CSS framework
-- Neon Database - PostgreSQL database service
-- Radix UI - Accessible React UI components
+***
+
+## 🛠️ Technology Stack
+
+- [Next.js](https://nextjs.org/) – React framework  
+- [TypeScript](https://www.typescriptlang.org/) – Type-safe JavaScript  
+- [Tailwind CSS](https://tailwindcss.com/) – Utility-first CSS framework  
+- [Neon Database](https://neon.tech/) – PostgreSQL serverless database  
+- [Radix UI](https://www.radix-ui.com/) – Accessible React UI components  
+
+***
+
+## 📌 Future Improvements (Planned)
+
+- Add authentication and user profiles  
+- Enable live fund price tracking via APIs  
+- Export reports in PDF/Excel formats  
+- Add collaboration features for group investments  
+
+***
